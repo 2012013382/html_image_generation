@@ -1,0 +1,3195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>超喵 · 端到端产品原型 · Demo v1</title>
+<style>
+/* ============ 设计系统 ============ */
+:root {
+  --navy: #1E2761;
+  --navy-deep: #0F1835;
+  --navy-soft: #2E3B7A;
+  --accent: #F04E23;
+  --accent-soft: #FFE8E0;
+  --accent-deep: #C03A17;
+  --ink: #1A1A2E;
+  --ink-soft: #3B3F52;
+  --muted: #6B7280;
+  --muted-soft: #94A3B8;
+  --line: #E2E7F3;
+  --line-dark: #C8D0E3;
+  --bg: #F6F7FB;
+  --pale: #EEF1F8;
+  --white: #FFFFFF;
+  --success: #10B981;
+  --success-soft: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-soft: #FEF3C7;
+  --danger: #DC2626;
+  --danger-soft: #FEE2E2;
+  --info: #0891B2;
+  --info-soft: #CFFAFE;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(15,24,53,.06);
+  --shadow-md: 0 4px 12px rgba(15,24,53,.08);
+  --shadow-lg: 0 10px 30px rgba(15,24,53,.12);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; border: none; }
+input, textarea { font-family: inherit; }
+
+#app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 56px 48px 1fr;
+}
+
+/* ============ 顶部 AppBar ============ */
+.topbar {
+  background: var(--navy-deep);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.topbar .brand { display: flex; align-items: center; gap: 10px; }
+.topbar .logo {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent) 0%, #E0390C 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; color: #fff;
+}
+.topbar .name { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+.topbar .tag {
+  padding: 3px 8px; background: rgba(240,78,35,0.15);
+  color: #FFB199; border-radius: 4px;
+  font-size: 11px; letter-spacing: 0.3px;
+}
+.topbar .role-indicator {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; background: rgba(255,255,255,0.08);
+  border-radius: 20px; font-size: 13px;
+}
+.topbar .role-icon { font-size: 16px; }
+.topbar .role-name { color: #CADCFC; }
+.topbar .controls { display: flex; gap: 8px; }
+.btn {
+  padding: 7px 14px; border-radius: 6px; font-size: 13px;
+  font-weight: 500; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary {
+  background: var(--accent); color: #fff;
+}
+.btn-primary:hover { background: var(--accent-deep); }
+.btn-primary:disabled { background: #6B5B54; cursor: not-allowed; }
+.btn-ghost {
+  background: rgba(255,255,255,0.08); color: #CADCFC;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-outline {
+  background: transparent; border: 1px solid var(--line-dark);
+  color: var(--ink-soft);
+}
+.btn-outline:hover { background: var(--pale); }
+
+/* ============ 剧情 storybar ============ */
+.storybar {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: stretch;
+  padding: 0 20px;
+  font-size: 12px;
+}
+.story-act {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 8px; color: var(--muted); position: relative;
+  padding: 0 8px;
+}
+.story-act .num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--pale); color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+  transition: all 0.3s;
+}
+.story-act.active { color: var(--accent); font-weight: 600; }
+.story-act.active .num { background: var(--accent); color: #fff; }
+.story-act.passed { color: var(--navy); }
+.story-act.passed .num { background: var(--navy); color: #fff; }
+.story-act:not(:last-child)::after {
+  content: ''; position: absolute; right: -1px; top: 50%;
+  transform: translateY(-50%);
+  width: 1px; height: 24px; background: var(--line);
+}
+
+/* ============ Stage（舞台区域） ============ */
+#stage {
+  overflow: hidden;
+  position: relative;
+}
+.scene {
+  height: 100%; overflow: auto;
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes expand {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 800px; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* ============ Narrator（右下角旁白浮窗） ============ */
+.narrator {
+  position: fixed; right: 20px; bottom: 20px;
+  width: 320px; padding: 14px 16px;
+  background: var(--navy-deep); color: #fff;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--accent);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  font-size: 12.5px; line-height: 1.6;
+  animation: slideInUp 0.4s ease-out;
+}
+.narrator .nar-title {
+  color: var(--accent); font-weight: 600;
+  font-size: 11px; letter-spacing: 0.5px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.narrator .nar-body { color: #E2E7F3; }
+.narrator .nar-close {
+  position: absolute; top: 8px; right: 10px;
+  background: transparent; color: #94A3B8;
+  font-size: 16px; padding: 0; line-height: 1;
+}
+.narrator .nar-close:hover { color: #fff; }
+
+/* ============ 场景公共样式 ============ */
+.scene-wrap {
+  max-width: 1400px; margin: 0 auto;
+  padding: 24px;
+  height: 100%;
+}
+.scene-grid-3 {
+  display: grid; gap: 16px; height: 100%;
+  grid-template-columns: 260px 1fr 340px;
+}
+.scene-grid-2 {
+  display: grid; gap: 20px;
+  grid-template-columns: 240px 1fr;
+  height: 100%;
+}
+.scene-grid-2 > .xiao-main {
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.scene-grid-2 .xiao-main .xm-scroll {
+  flex: 1 1 auto; overflow: auto;
+  padding-right: 4px;
+}
+.scene-grid-leader {
+  display: grid; gap: 20px; height: 100%;
+  grid-template-columns: 1fr 340px;
+}
+.scene-grid-leader > .leader-main {
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.scene-grid-leader .leader-main .lm-scroll {
+  flex: 1 1 auto; overflow: auto;
+  padding-right: 4px;
+}
+
+/* ============ 自然语言 chat 输入框（Leader / 小二 通用） ============ */
+.chat-bar {
+  flex-shrink: 0;
+  margin-top: 14px;
+  background: #fff;
+  border: 1.5px solid var(--line-dark);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.chat-bar:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240,78,35,0.12);
+}
+.chat-bar .ch-row {
+  display: flex; align-items: flex-end; gap: 8px;
+}
+.chat-bar .ch-role-label {
+  font-size: 11px; color: var(--muted); font-weight: 600;
+  padding: 6px 10px; background: var(--pale);
+  border-radius: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.chat-bar textarea {
+  flex: 1; resize: none; border: none; outline: none;
+  font-size: 13.5px; line-height: 1.55;
+  color: var(--ink); background: transparent;
+  padding: 6px 2px;
+  min-height: 24px; max-height: 100px;
+  font-family: inherit;
+}
+.chat-bar textarea::placeholder {
+  color: var(--muted-soft);
+  font-size: 13px;
+}
+.chat-bar .ch-send {
+  flex-shrink: 0; width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--accent); color: #fff; border: none;
+  cursor: pointer; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.chat-bar .ch-send:hover { background: #D84420; }
+.chat-bar .ch-hints {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+.chat-bar .ch-hint {
+  font-size: 11.5px; color: var(--muted);
+  padding: 3px 10px; border: 1px solid var(--line);
+  border-radius: 12px; background: #FAFBFE;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.chat-bar .ch-hint.urgent {
+  color: var(--danger);
+  border-color: #FFD3C7;
+  background: #FFF8F7;
+}
+.chat-bar .ch-hint:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ============ 卡片/面板 ============ */
+.panel {
+  background: #fff; border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.panel-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+  background: #FAFBFE;
+}
+.panel-title {
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-body { padding: 16px; }
+
+/* ============ 左侧导航 ============ */
+.side-nav {
+  background: #fff; border-right: 1px solid var(--line);
+  padding: 16px 0;
+  display: flex; flex-direction: column; gap: 2px;
+  border-radius: var(--radius-md);
+}
+.nav-section-label {
+  padding: 8px 16px 4px; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--muted-soft); font-weight: 600;
+}
+.nav-item {
+  padding: 9px 16px; display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--ink-soft);
+  cursor: pointer; transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--pale); }
+.nav-item.active {
+  background: var(--accent-soft); color: var(--accent-deep);
+  border-left-color: var(--accent); font-weight: 600;
+}
+.nav-item .icon {
+  width: 18px; height: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+/* ============ 芯片/标签 ============ */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 500;
+  line-height: 1.6;
+}
+.chip-navy { background: var(--navy); color: #fff; }
+.chip-accent { background: var(--accent); color: #fff; }
+.chip-success { background: var(--success-soft); color: var(--success); }
+.chip-warning { background: var(--warning-soft); color: var(--warning); }
+.chip-danger { background: var(--danger-soft); color: var(--danger); }
+.chip-info { background: var(--info-soft); color: var(--info); }
+.chip-muted { background: var(--pale); color: var(--muted); }
+.chip-outline {
+  background: transparent; border: 1px solid var(--line-dark);
+  color: var(--ink-soft);
+}
+
+/* ============ Agent 头像 ============ */
+.agent-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  border: 2px solid transparent;
+}
+.agent-avatar.octopus {
+  background: linear-gradient(135deg, var(--accent) 0%, #E0390C 100%);
+  color: #fff;
+}
+.agent-avatar.expert {
+  background: linear-gradient(135deg, var(--navy-soft) 0%, var(--navy) 100%);
+  color: #fff;
+}
+.agent-avatar.thinking {
+  animation: pulse 1.6s ease-in-out infinite;
+  border-color: var(--accent);
+}
+.agent-avatar.sm { width: 28px; height: 28px; font-size: 14px; }
+.agent-avatar.lg { width: 48px; height: 48px; font-size: 22px; }
+
+/* ============ 消息气泡（任务线程） ============ */
+.thread { display: flex; flex-direction: column; gap: 14px; padding: 4px; }
+.msg {
+  display: flex; gap: 12px;
+  animation: slideInUp 0.4s ease-out;
+}
+.msg .msg-body {
+  flex: 1; background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-md); overflow: hidden;
+}
+.msg-meta {
+  padding: 8px 14px; background: #FAFBFE;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px;
+}
+.msg-meta .name { font-weight: 600; color: var(--ink); }
+.msg-meta .role { color: var(--muted); }
+.msg-meta .time { margin-left: auto; color: var(--muted-soft); font-size: 11px; }
+.msg-content { padding: 14px; }
+.msg.octopus .msg-body { border-left: 3px solid var(--accent); }
+.msg.expert .msg-body { border-left: 3px solid var(--navy); }
+.msg.system .msg-body { border-left: 3px solid var(--info); }
+.msg.conflict .msg-body {
+  border: 2px solid var(--warning);
+  background: var(--warning-soft);
+}
+.msg.conflict .msg-meta { background: var(--warning); color: #fff; }
+.msg.conflict .msg-meta .name,
+.msg.conflict .msg-meta .role { color: #fff; }
+
+/* ============ 专家建议卡结构化字段 ============ */
+.expert-field {
+  margin-bottom: 10px;
+}
+.expert-field:last-child { margin-bottom: 0; }
+.ef-label {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.3px;
+  font-weight: 600; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.ef-value {
+  font-size: 13px; color: var(--ink); line-height: 1.6;
+}
+
+/* ============ 确认卡 ============ */
+.confirm-card {
+  border: 2px solid var(--accent);
+  background: linear-gradient(180deg, var(--accent-soft) 0%, #fff 50%);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 10px 0;
+}
+.confirm-card .cc-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 600; color: var(--accent-deep);
+  margin-bottom: 10px;
+}
+.confirm-card .cc-actions {
+  display: flex; gap: 10px; margin-top: 14px;
+}
+
+/* ============ 执行进度（右栏） ============ */
+.exec-item {
+  padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: var(--radius-sm); margin-bottom: 10px;
+  background: #fff;
+  animation: slideInRight 0.4s ease-out;
+}
+.exec-item .ex-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 6px;
+}
+.exec-item .ex-name { font-size: 12.5px; font-weight: 600; }
+.exec-item .ex-status { margin-left: auto; font-size: 11px; }
+.exec-item.running { border-color: var(--info); background: #F0FAFF; }
+.exec-item.done { border-color: var(--success); background: #F0FDF4; }
+.exec-item.done .ex-status { color: var(--success); font-weight: 600; }
+.exec-item.pending .ex-status { color: var(--muted); }
+.exec-item.running .ex-status { color: var(--info); font-weight: 600; }
+.progress-bar {
+  height: 4px; background: var(--pale); border-radius: 2px; overflow: hidden;
+  margin-top: 6px;
+}
+.progress-bar .fill {
+  height: 100%; background: var(--info);
+  transition: width 1.2s ease;
+}
+.exec-item.done .fill { background: var(--success); }
+.spinner {
+  display: inline-block; width: 12px; height: 12px;
+  border: 2px solid transparent; border-top-color: currentColor;
+  border-right-color: currentColor; border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+/* ============ Leader 指挥台特色样式 ============ */
+.goal-input {
+  background: #fff; border: 2px solid var(--line);
+  border-radius: var(--radius-md); padding: 20px;
+  transition: border-color 0.2s;
+}
+.goal-input:focus-within { border-color: var(--accent); }
+.goal-input textarea {
+  width: 100%; border: none; outline: none;
+  font-size: 16px; resize: none;
+  color: var(--ink); line-height: 1.6;
+  padding: 0; background: transparent;
+}
+.goal-input textarea::placeholder { color: var(--muted-soft); }
+
+.strategy-card {
+  border: 2px solid var(--line); border-radius: var(--radius-md);
+  padding: 16px; cursor: pointer;
+  background: #fff; transition: all 0.2s;
+  position: relative;
+}
+.strategy-card:hover { border-color: var(--line-dark); transform: translateY(-2px); }
+.strategy-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(240,78,35,0.1);
+}
+.strategy-card .sc-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.strategy-card .sc-num {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px;
+}
+.strategy-card.selected .sc-num { background: var(--accent); }
+.strategy-card .sc-title { font-size: 15px; font-weight: 600; }
+.strategy-card .sc-tag { margin-left: auto; }
+.strategy-card .sc-metric {
+  display: flex; gap: 12px; margin-top: 12px;
+  padding-top: 12px; border-top: 1px dashed var(--line);
+}
+.strategy-card .sc-metric > div {
+  flex: 1;
+}
+.strategy-card .sc-metric .label {
+  font-size: 10.5px; color: var(--muted); margin-bottom: 2px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.strategy-card .sc-metric .value { font-size: 15px; font-weight: 600; color: var(--ink); }
+.strategy-card .sc-metric .value.accent { color: var(--accent); }
+.strategy-card .sc-radio {
+  position: absolute; top: 16px; right: 16px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--line-dark); background: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.strategy-card.selected .sc-radio {
+  border-color: var(--accent); background: var(--accent);
+}
+.strategy-card.selected .sc-radio::after {
+  content: '✓'; color: #fff; font-size: 13px; font-weight: 700;
+}
+
+/* ============ 专家建议卡（可点击展开详情，建立信任度） ============ */
+.expert-row {
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+  background: #fff; overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.expert-row.ready .exr-head { cursor: pointer; }
+.expert-row.ready:hover { border-color: var(--line-dark); }
+.expert-row.expanded {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240,78,35,0.08);
+}
+.expert-row .exr-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+}
+.expert-row .exr-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--muted);
+  flex-shrink: 0;
+}
+.expert-row .exr-caret {
+  font-size: 22px; color: var(--muted); font-weight: 300;
+  flex-shrink: 0; width: 16px; text-align: center;
+  transition: transform 0.25s, opacity 0.2s;
+  transform: rotate(90deg);
+}
+.expert-row.expanded .exr-caret { transform: rotate(-90deg); }
+.expert-row .exr-detail {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.35s ease;
+  background: #FAFBFE;
+  border-top: 0 solid transparent;
+}
+.expert-row.expanded .exr-detail {
+  max-height: 600px;
+  border-top: 1px solid var(--line);
+}
+.expert-row .exr-detail-inner {
+  padding: 14px 16px;
+}
+.exd-row { margin-bottom: 10px; }
+.exd-label {
+  font-size: 10.5px; color: var(--muted); font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.exd-value { font-size: 12.5px; color: var(--ink); line-height: 1.65; }
+.exd-list { margin: 0; padding-left: 18px; }
+.exd-list li { margin-bottom: 3px; }
+.exd-grid {
+  display: grid; grid-template-columns: 1.4fr 1.4fr 1fr; gap: 14px;
+  padding-top: 10px; margin-top: 4px;
+  border-top: 1px dashed var(--line);
+}
+.exd-confidence {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--ink);
+}
+.exd-conf-bar {
+  flex: 1; height: 6px;
+  background: var(--pale); border-radius: 3px;
+  overflow: hidden;
+}
+.exd-conf-bar .fill {
+  height: 100%; background: var(--success);
+  border-radius: 3px;
+}
+
+/* ============ 任务场景：专家卡片（可折叠以建立信任度） ============ */
+.msg.expert.collapsible .msg-body {
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.msg.expert.collapsible .msg-meta {
+  padding: 10px 14px;
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.msg.expert.collapsible .msg-meta:hover {
+  background: var(--pale);
+}
+.msg.expert.collapsible.expanded .msg-meta {
+  border-bottom-color: var(--line);
+}
+.msg.expert.collapsible .msg-collapsible-body {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.25s ease;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.msg.expert.collapsible.expanded .msg-collapsible-body {
+  max-height: 1200px;
+  opacity: 1;
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+}
+.msg.expert.collapsible .exr-caret {
+  transition: transform 0.25s ease, color 0.2s ease;
+  transform: rotate(90deg);
+  font-weight: 300;
+}
+.msg.expert.collapsible.expanded .exr-caret {
+  transform: rotate(-90deg);
+  color: var(--accent) !important;
+}
+.msg.expert.collapsible.expanded .msg-body {
+  border-color: rgba(240,78,35,0.28);
+  box-shadow: 0 0 0 3px rgba(240,78,35,0.06);
+}
+
+/* ============ KPI 自动接入 / Gap 识别 卡片 ============ */
+.kpi-row {
+  display: grid; grid-template-columns: 1.6fr 0.8fr 1fr 1.4fr 0.9fr;
+  gap: 10px; align-items: center;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: #fff;
+  margin-top: 8px; font-size: 12.5px;
+}
+.kpi-row.gap-critical { border-color: var(--danger); background: #FFF8F7; }
+.kpi-row.gap-warning  { border-color: var(--warning); background: #FFFBF0; }
+.kpi-row.gap-ok       { border-color: var(--success); background: #F4FCF6; }
+.kpi-row .kp-name { font-weight: 600; color: var(--ink); }
+.kpi-row .kp-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.kpi-row .kp-val  { font-variant-numeric: tabular-nums; font-weight: 600; }
+.kpi-row .kp-bar {
+  position: relative; height: 6px; border-radius: 3px;
+  background: var(--pale); overflow: hidden;
+}
+.kpi-row .kp-bar .fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 100%);
+  border-radius: 3px;
+}
+.kpi-row.gap-critical .kp-bar .fill { background: var(--danger); }
+.kpi-row.gap-warning  .kp-bar .fill { background: var(--warning); }
+.kpi-row.gap-ok       .kp-bar .fill { background: var(--success); }
+.kpi-row .kp-gap { font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi-row.gap-critical .kp-gap { color: var(--danger); }
+.kpi-row.gap-warning  .kp-gap { color: var(--warning); }
+.kpi-row.gap-ok       .kp-gap { color: var(--success); }
+.kpi-row .kp-tag { justify-self: end; }
+
+.gap-highlight {
+  background: linear-gradient(180deg, #FFF3F0 0%, #fff 100%);
+  border: 1px solid #FFD3C7; border-radius: var(--radius-md);
+  padding: 14px 16px; margin-top: 12px;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.gap-highlight .gh-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--danger); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.gap-highlight .gh-title { font-weight: 700; color: var(--ink); font-size: 14px; }
+.gap-highlight .gh-body  { font-size: 12.5px; color: var(--ink-soft); line-height: 1.7; margin-top: 4px; }
+
+.auto-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, #FFF6E9 0%, #FFF 100%);
+  border: 1px solid #F6D98E;
+  font-size: 12.5px; color: var(--ink-soft);
+}
+.auto-banner .ab-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--warning);
+  box-shadow: 0 0 0 4px rgba(245,166,35,0.2);
+  animation: abpulse 1.6s ease-in-out infinite;
+}
+@keyframes abpulse {
+  0%,100% { box-shadow: 0 0 0 4px rgba(245,166,35,0.2); }
+  50%     { box-shadow: 0 0 0 7px rgba(245,166,35,0.05); }
+}
+
+/* ============ 大屏数字 stats ============ */
+.stat-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.stat-card {
+  background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-md); padding: 14px;
+}
+.stat-card .label {
+  font-size: 11px; color: var(--muted); font-weight: 500;
+  margin-bottom: 6px;
+}
+.stat-card .value {
+  font-size: 22px; font-weight: 700; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.stat-card .delta {
+  font-size: 11.5px; margin-top: 4px;
+  font-weight: 500;
+}
+.delta.up { color: var(--success); }
+.delta.down { color: var(--danger); }
+.delta.flat { color: var(--muted); }
+
+/* ============ 任务分发树状图 ============ */
+.dispatch-tree {
+  padding: 24px; background: #fff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+}
+.tree-level {
+  display: flex; justify-content: center; gap: 12px;
+  margin-bottom: 14px; position: relative;
+}
+.tree-node {
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--pale); color: var(--ink);
+  font-size: 12px; font-weight: 500;
+  min-width: 110px; text-align: center;
+  border: 1px solid var(--line);
+  opacity: 0; transform: translateY(-8px);
+  transition: all 0.5s;
+}
+.tree-node.reveal { opacity: 1; transform: translateY(0); }
+.tree-node.root {
+  background: var(--accent); color: #fff;
+  font-size: 14px; font-weight: 600; padding: 14px 24px;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+.tree-node.level-1 { background: var(--navy); color: #fff; border-color: var(--navy); }
+.tree-node.level-2 { background: #fff; border-color: var(--navy); color: var(--navy); border-width: 1.5px; }
+.tree-node.level-3 { background: #fff; border: 1px dashed var(--line-dark); }
+.tree-line {
+  width: 1px; height: 20px; background: var(--line-dark);
+  margin: 0 auto;
+}
+
+/* ============ Toast 切换视角 ============ */
+.role-switch-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,24,53,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.3s ease-out;
+}
+.role-switch-card {
+  background: #fff; border-radius: var(--radius-lg);
+  padding: 40px 48px; max-width: 480px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+.role-switch-card .ic {
+  width: 64px; height: 64px; margin: 0 auto 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--navy) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; color: #fff;
+}
+.role-switch-card h2 { margin: 0 0 8px; font-size: 20px; color: var(--ink); }
+.role-switch-card p { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+.role-switch-progress {
+  height: 4px; background: var(--pale); border-radius: 2px; overflow: hidden;
+}
+.role-switch-progress .f {
+  height: 100%; background: var(--accent);
+  width: 0; animation: fillBar 1.6s ease-out forwards;
+}
+@keyframes fillBar { to { width: 100%; } }
+
+/* ============ 通用工具类 ============ */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
+.mt-2 { margin-top: 8px; } .mt-3 { margin-top: 12px; } .mt-4 { margin-top: 16px; }
+.mb-2 { margin-bottom: 8px; } .mb-3 { margin-bottom: 12px; } .mb-4 { margin-bottom: 16px; }
+.text-sm { font-size: 12px; }
+.text-xs { font-size: 11px; }
+.text-muted { color: var(--muted); }
+.text-accent { color: var(--accent); }
+.text-navy { color: var(--navy); }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.w-full { width: 100%; }
+
+/* 开场封面 */
+.cover-wrap {
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy) 50%, #2C1855 100%);
+  position: relative; overflow: hidden;
+}
+.cover-wrap::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 20% 30%, rgba(240,78,35,0.15) 0%, transparent 40%),
+                    radial-gradient(circle at 80% 70%, rgba(100,140,255,0.12) 0%, transparent 40%);
+}
+.cover-content { max-width: 720px; text-align: center; position: relative; z-index: 1; color: #fff; padding: 40px; }
+.cover-logo {
+  width: 72px; height: 72px; margin: 0 auto 24px;
+  background: linear-gradient(135deg, var(--accent) 0%, #E0390C 100%);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; font-weight: 700; color: #fff;
+  box-shadow: 0 8px 32px rgba(240,78,35,0.4);
+}
+.cover-title { font-size: 38px; font-weight: 700; margin: 0 0 10px; letter-spacing: 1px; }
+.cover-subtitle { font-size: 16px; color: #CADCFC; margin: 0 0 30px; line-height: 1.6; }
+.cover-narrative {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-left: 3px solid var(--accent);
+  padding: 18px 20px; border-radius: 10px;
+  text-align: left; color: #E2E7F3; font-size: 14px; line-height: 1.8;
+  margin-bottom: 30px;
+}
+.cover-narrative strong { color: #fff; }
+.cover-cast {
+  display: flex; justify-content: center; gap: 24px;
+  margin-bottom: 30px;
+}
+.cover-cast .cast-item { text-align: center; }
+.cover-cast .cast-avatar {
+  width: 56px; height: 56px; margin: 0 auto 6px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.cover-cast .cast-name { font-size: 12px; color: #CADCFC; }
+
+/* Summary 尾声样式 */
+.summary-wrap {
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #fff 0%, var(--pale) 100%);
+  padding: 40px;
+}
+.summary-content { max-width: 900px; width: 100%; }
+.summary-title {
+  font-size: 28px; font-weight: 700; text-align: center;
+  color: var(--navy); margin: 0 0 8px;
+}
+.summary-subtitle {
+  font-size: 15px; text-align: center; color: var(--muted);
+  margin: 0 0 28px;
+}
+.summary-big-stat {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
+  color: #fff; padding: 30px; border-radius: var(--radius-lg);
+  text-align: center; margin-bottom: 24px;
+}
+.summary-big-stat .lbl { font-size: 13px; color: #CADCFC; margin-bottom: 8px; }
+.summary-big-stat .val { font-size: 48px; font-weight: 700; color: #fff; }
+.summary-big-stat .val .unit { font-size: 20px; color: var(--accent); margin-left: 4px; }
+.summary-promise-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+}
+.summary-promise {
+  background: #fff; border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md); padding: 16px;
+}
+.summary-promise .who { font-size: 11px; color: var(--accent); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+.summary-promise .what { font-size: 13.5px; color: var(--ink); line-height: 1.6; }
+
+/* 任务列表 */
+.task-item {
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: #fff;
+  margin-bottom: 8px; cursor: pointer;
+  transition: all 0.15s;
+}
+.task-item:hover { border-color: var(--line-dark); background: #FAFBFE; }
+.task-item.active { border-color: var(--accent); background: var(--accent-soft); }
+.task-item.new {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,78,35,0.08);
+  animation: bounce 1.4s ease-in-out 2;
+}
+.task-item .ti-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.task-item .ti-title { font-size: 12.5px; font-weight: 600; color: var(--ink); flex: 1; }
+.task-item .ti-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* 小二首页 dashboard */
+.xiao-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
+  color: #fff; padding: 20px 24px; border-radius: var(--radius-md);
+  margin-bottom: 16px; position: relative; overflow: hidden;
+}
+.xiao-header::after {
+  content: ''; position: absolute; right: -20px; top: -20px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(240,78,35,0.2) 0%, transparent 70%);
+}
+.xiao-header .greet { font-size: 13px; color: #CADCFC; margin-bottom: 4px; }
+.xiao-header .name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.xiao-header .sub { font-size: 12.5px; color: #CADCFC; }
+
+/* 章鱼路由卡特殊样式 */
+.routing-card {
+  background: linear-gradient(180deg, #FFF6F2 0%, #fff 50%);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.routing-experts {
+  display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.routing-expert-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; background: #fff;
+  border: 1px solid var(--line); border-radius: 20px;
+  font-size: 12px;
+}
+.routing-expert-chip.active {
+  border-color: var(--accent); background: var(--accent-soft);
+}
+.routing-expert-chip .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--muted-soft);
+}
+.routing-expert-chip.active .dot {
+  background: var(--accent); animation: pulse 1.2s ease-in-out infinite;
+}
+.routing-expert-chip.done .dot { background: var(--success); }
+
+/* 冲突裁决双列对比 */
+.conflict-compare {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin: 12px 0;
+}
+.conflict-opt {
+  padding: 12px; background: #fff; border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.conflict-opt.recommended {
+  border-color: var(--success); background: #F0FDF4;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+  position: relative;
+}
+.conflict-opt.recommended::before {
+  content: '章鱼推荐'; position: absolute; top: -9px; right: 10px;
+  background: var(--success); color: #fff;
+  padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
+}
+.conflict-opt .who { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.conflict-opt .price { font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.conflict-opt .reason { font-size: 11.5px; color: var(--ink-soft); line-height: 1.5; }
+
+/* 可选按钮组（冲突裁决决策） */
+.btn-group-inline {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+.btn-decision {
+  flex: 1; padding: 8px 12px; border-radius: 6px;
+  background: #fff; border: 1.5px solid var(--line);
+  font-size: 12.5px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-decision:hover { border-color: var(--accent); background: var(--accent-soft); }
+.btn-decision.primary {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.btn-decision.primary:hover { background: var(--accent-deep); }
+
+/* 结果卡 */
+.result-card {
+  background: linear-gradient(135deg, #F0FDF4 0%, #fff 60%);
+  border: 1.5px solid var(--success);
+  border-radius: var(--radius-md); padding: 16px;
+}
+.result-card .rc-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px;
+}
+.result-card .rc-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--success); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.result-card .rc-title { font-size: 14px; font-weight: 600; color: var(--success); }
+.result-metric-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-top: 10px;
+}
+.result-metric {
+  padding: 10px; background: #fff; border-radius: 6px; text-align: center;
+}
+.result-metric .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.result-metric .val { font-size: 16px; font-weight: 700; color: var(--success); }
+
+/* Leader 看板目标进度 */
+.goal-progress-card {
+  background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-md); padding: 20px;
+}
+.gp-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 16px;
+}
+.gp-head .title { font-size: 15px; font-weight: 600; color: var(--navy); }
+.gp-head .target { font-size: 12px; color: var(--muted); }
+.gp-values {
+  display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px;
+}
+.gp-values .current {
+  font-size: 36px; font-weight: 700; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.gp-values .current.updating { animation: bounce 0.6s ease; }
+.gp-values .slash { font-size: 20px; color: var(--muted-soft); }
+.gp-values .goal { font-size: 18px; color: var(--muted); font-weight: 500; }
+.gp-bar {
+  height: 12px; background: var(--pale); border-radius: 6px; overflow: hidden;
+}
+.gp-bar .fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent) 0%, #FF7D55 100%);
+  width: 0; transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 6px;
+}
+
+/* 小任务行（Leader 看板） */
+.exec-log-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+}
+.exec-log-item:last-child { border-bottom: none; }
+.exec-log-item .city {
+  font-weight: 600; color: var(--navy); min-width: 70px;
+}
+.exec-log-item .action { flex: 1; color: var(--ink-soft); }
+.exec-log-item .time { color: var(--muted); font-size: 11px; }
+
+/* 尾声关键数字 */
+.wow-stat {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 20px;
+}
+.wow-stat-item {
+  background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-md); padding: 18px; text-align: center;
+}
+.wow-stat-item .v {
+  font-size: 30px; font-weight: 700; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.wow-stat-item .l { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+/* 滚动条美化 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-dark); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-soft); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- 顶部 AppBar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">超</div>
+      <span class="name">超喵</span>
+      <span class="tag">端到端产品原型 · Demo v1</span>
+    </div>
+    <div class="role-indicator" id="roleIndicator">
+      <span class="role-icon">🎬</span>
+      <span class="role-name">开场</span>
+    </div>
+    <div class="controls">
+      <button class="btn btn-ghost" id="btnPrev" onclick="goPrev()">← 上一步</button>
+      <button class="btn btn-primary" id="btnNext" onclick="goNext()">下一步 →</button>
+      <button class="btn btn-ghost" onclick="restart()">↻ 重演</button>
+    </div>
+  </header>
+
+  <!-- 剧情进度条 -->
+  <div class="storybar" id="storybar">
+    <div class="story-act" data-act="0"><span class="num">0</span><span>开场</span></div>
+    <div class="story-act" data-act="1"><span class="num">1</span><span>平台识别 gap · Leader 授权</span></div>
+    <div class="story-act" data-act="2"><span class="num">2</span><span>任务分发到小二</span></div>
+    <div class="story-act" data-act="3"><span class="num">3</span><span>多专家协同执行</span></div>
+    <div class="story-act" data-act="4"><span class="num">4</span><span>回到 Leader 看板</span></div>
+    <div class="story-act" data-act="5"><span class="num">★</span><span>尾声</span></div>
+  </div>
+
+  <!-- 舞台 -->
+  <main id="stage"></main>
+
+</div>
+
+<!-- 旁白浮窗 -->
+<div class="narrator" id="narrator">
+  <button class="nar-close" onclick="toggleNarrator()">×</button>
+  <div class="nar-title">💡 此刻正在发生</div>
+  <div class="nar-body" id="narBody">欢迎来到「超喵」端到端产品原型演示。</div>
+</div>
+
+<script>
+/* ============ 状态管理 ============ */
+const state = {
+  stepIdx: 0,
+  selectedStrategy: null,   // 'A' | 'B' | 'C'
+  conflictResolved: false,
+  conflictChoice: null,     // 'price' | 'margin'
+  narratorVisible: true
+};
+
+/* ============ 剧本定义 ============ */
+const STEPS = []; // 将在下面填入
+
+/* ============ 渲染函数 ============ */
+function render() {
+  const step = STEPS[state.stepIdx];
+  if (!step) return;
+  const stage = document.getElementById('stage');
+  stage.innerHTML = '';
+  const scene = document.createElement('div');
+  scene.className = 'scene';
+  scene.innerHTML = step.html();
+  stage.appendChild(scene);
+  if (step.afterMount) step.afterMount(scene);
+  updateRoleIndicator(step.role);
+  updateStoryBar(step.act);
+  updateNarrator(step.narrator);
+  updateControls();
+}
+function updateRoleIndicator(role) {
+  const el = document.getElementById('roleIndicator');
+  const map = {
+    'intro':   { icon: '🎬', name: '开场' },
+    'leader':  { icon: '👔', name: 'Leader 视角 · 张总（猫超总）' },
+    'system':  { icon: '🐙', name: '系统视角 · 任务分发中' },
+    'xiaoer':  { icon: '🧑‍💼', name: '小二视角 · 李华（华东生鲜）' },
+    'summary': { icon: '🏁', name: '演示结束' }
+  };
+  const m = map[role] || map['intro'];
+  el.innerHTML = `<span class="role-icon">${m.icon}</span><span class="role-name">${m.name}</span>`;
+}
+function updateStoryBar(act) {
+  document.querySelectorAll('.story-act').forEach(el => {
+    const a = parseInt(el.dataset.act, 10);
+    el.classList.remove('active', 'passed');
+    if (a === act) el.classList.add('active');
+    else if (a < act) el.classList.add('passed');
+  });
+}
+function updateNarrator(text) {
+  if (!text) return;
+  document.getElementById('narBody').innerHTML = text;
+}
+function updateControls() {
+  document.getElementById('btnPrev').disabled = state.stepIdx === 0;
+  const lastIdx = STEPS.length - 1;
+  const nextBtn = document.getElementById('btnNext');
+  if (state.stepIdx === lastIdx) {
+    nextBtn.disabled = true;
+    nextBtn.innerText = '✓ 演示已结束';
+  } else {
+    nextBtn.disabled = false;
+    const step = STEPS[state.stepIdx];
+    nextBtn.innerText = step.nextLabel || '下一步 →';
+    nextBtn.disabled = !!step.nextBlocked;
+  }
+}
+function toggleNarrator() {
+  const el = document.getElementById('narrator');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function goNext() {
+  if (state.stepIdx < STEPS.length - 1) {
+    state.stepIdx++;
+    render();
+  }
+}
+function goPrev() {
+  if (state.stepIdx > 0) {
+    state.stepIdx--;
+    render();
+  }
+}
+function restart() {
+  state.stepIdx = 0;
+  state.selectedStrategy = null;
+  state.conflictResolved = false;
+  state.conflictChoice = null;
+  render();
+}
+
+/* 解除下一步按钮封锁（在需要用户先操作时调用） */
+function unblockNext() {
+  STEPS[state.stepIdx].nextBlocked = false;
+  updateControls();
+}
+
+/* ============ 剧本：Act 0 — 开场 ============ */
+STEPS.push({
+  act: 0, role: 'intro',
+  narrator: '这个演示完整重演方案 §11 的端到端样例：<strong>平台自动读取各团队 KPI / 业务指标与阶段节奏 → 识别 Q2 目标 gap → 章鱼自动生成策略选项 → Leader 授权与边界调整</strong> → 任务分发到小二 → 多专家协同执行 → 结果回流 Leader 看板。',
+  html: () => `
+    <div class="cover-wrap">
+      <div class="cover-content">
+        <div class="cover-logo">超</div>
+        <h1 class="cover-title">超喵 · 端到端产品原型</h1>
+        <p class="cover-subtitle">一场关于「猫超 AI 化」的 3 分钟演示</p>
+        <div class="cover-narrative">
+          今天演示的不是一个 AI 聊天框，而是一套能让<strong>「Q 级目标」贯通到「小二单次动作」</strong>的 AI 运营系统。
+          <br><br>
+          你将看到：<strong>平台自动拉通 KPI / 识别 gap</strong>、章鱼自动生成可选策略、Leader 授权与调边界、任务自动分发、多位专家并行协同、冲突被显性裁决、执行结果逐层回流——<strong>全程不到 3 分钟</strong>。
+        </div>
+        <div class="cover-cast">
+          <div class="cast-item"><div class="cast-avatar">👔</div><div class="cast-name">Leader · 张总</div></div>
+          <div class="cast-item"><div class="cast-avatar">🐙</div><div class="cast-name">章鱼大脑</div></div>
+          <div class="cast-item"><div class="cast-avatar">🧑‍💼</div><div class="cast-name">小二 · 李华</div></div>
+          <div class="cast-item"><div class="cast-avatar">🧠</div><div class="cast-name">4+1 一级专家</div></div>
+        </div>
+        <button class="btn btn-primary" style="padding: 12px 32px; font-size: 15px;" onclick="goNext()">开始演示 →</button>
+      </div>
+    </div>
+  `
+});
+
+/* ============ Act 1 — Leader 指挥台 ============ */
+STEPS.push({
+  act: 1, role: 'leader',
+  narrator: '张总登陆<strong>超喵·目标指挥台</strong>。这不是一张空白表单——平台已经<strong>自动拉通各团队 KPI / 业务指标 / 目标值 / 阶段节奏</strong>，并识别出 Q2 生鲜类目的关键 gap。Leader 的日常动作不是"手工下目标"，而是<strong>授权、调边界、做关键取舍</strong>（§3.6 / §5.4）。下方<strong>自然语言输入框</strong>全程保留——用于追问策略依据、调整策略，或在突发场景下直接下发命令（如"水产本周立即冲 +30%"）。',
+  html: () => sceneLeader_input()
+});
+STEPS.push({
+  act: 1, role: 'leader',
+  narrator: '张总点"授权生成策略"后（或由 gap 自动触发），<strong>章鱼大脑并行征询</strong>经营分析、商品、营销、供应链、价格 5 位一级专家——gap 本身已是结构化意图，<strong>无需 Leader 手工拼目标文本</strong>。各专家按 §8.3 <strong>响应协议</strong>返回结构化建议。',
+  html: () => sceneLeader_thinking(),
+  afterMount: (el) => animateExpertsThinking(el)
+});
+STEPS.push({
+  act: 1, role: 'leader',
+  narrator: '章鱼汇总 5 位专家结论，<strong>给出 3 条可选策略</strong>（方案 §5.4 明确要求"不少于 2 条，供 Leader 选择"）。<strong>Leader 的常态动作 = 从系统生成的选项中授权 + 调整</strong>，而不是从零写目标。请点击卡片选择，然后点下一步。',
+  nextBlocked: true,
+  html: () => sceneLeader_strategies()
+});
+STEPS.push({
+  act: 1, role: 'leader',
+  narrator: '高风险动作（CRITICAL 级别）<strong>不允许静默自动执行</strong>——方案 §9.6 规定预算分配必须 Leader 亲自确认。这是信任阶梯的基础。',
+  nextBlocked: true,
+  html: () => sceneLeader_confirm()
+});
+
+/* ============ Act 2 — 任务分发 + 视角切换 ============ */
+STEPS.push({
+  act: 2, role: 'system',
+  narrator: '章鱼将策略 C 自动拆解为 <strong>8 个具体任务</strong>，按业务对象（城市/类目/商家）路由到对应小二。这条链路完整记录在"任务中心"，可追溯到季度目标源头。',
+  html: () => sceneDispatch(),
+  afterMount: (el) => animateDispatchTree(el)
+});
+STEPS.push({
+  act: 2, role: 'xiaoer',
+  narrator: '视角切换到<strong>小二李华</strong>——华东区生鲜负责。他刚登陆超喵就看到一条新任务从 Leader 目标指挥台直达。注意：他不需要理解 Leader 的"策略 C"是什么，只需要处理分到自己的那块。',
+  html: () => sceneXiaoer_home()
+});
+
+/* ============ Act 3 — 任务态（核心戏份） ============ */
+STEPS.push({
+  act: 3, role: 'xiaoer',
+  narrator: '进入任务态——超喵最核心的工作界面：左栏任务清单、<strong>中栏统一任务线程（章鱼主叙事）</strong>、右栏执行进度与文件。章鱼先发"协同路由卡"，告诉小二 <strong>本次要拉起哪几位专家</strong>。',
+  html: () => sceneTask_start(),
+  afterMount: (el) => animateRoutingCard(el)
+});
+STEPS.push({
+  act: 3, role: 'xiaoer',
+  narrator: '4 位专家按 §8.3 响应协议<strong>结构化输出建议</strong>：诊断、依据、建议动作、预估影响、风险、置信度、是否需确认、是否需跨域协同。<strong>注意第 4 张卡</strong>——价格专家结论与商品专家产生了冲突。',
+  html: () => sceneTask_experts()
+});
+STEPS.push({
+  act: 3, role: 'xiaoer',
+  narrator: '<strong>这是章鱼最值钱的能力——冲突裁决（§7.4）</strong>。章鱼不静默选边，而是<strong>显性呈现冲突</strong>+<strong>裁决依据</strong>+<strong>允许用户覆盖</strong>。默认按"毛利优先于 GMV"规则推荐 ¥13.9。',
+  nextBlocked: true,
+  html: () => sceneTask_conflict()
+});
+STEPS.push({
+  act: 3, role: 'xiaoer',
+  narrator: '冲突裁决后章鱼汇总统一方案。本次涉及挂价 + 补货 + 建链，命中 §9.6 高风险动作清单，<strong>需显式确认</strong>。小二点确认后触发执行层。',
+  nextBlocked: true,
+  html: () => sceneTask_confirm()
+});
+STEPS.push({
+  act: 3, role: 'xiaoer',
+  narrator: '确认后<strong>3 个 Skill 并行执行</strong>：补货 Skill 调补货系统 / 建链 Skill 调商品系统 / 价格 Skill 调价格系统（金额超阈值自动走审批）。右栏实时回传状态。',
+  html: () => sceneTask_executing(),
+  afterMount: (el) => animateSkillExecution(el)
+});
+
+/* ============ Act 4 — 回到 Leader 看板 ============ */
+STEPS.push({
+  act: 4, role: 'leader',
+  narrator: '<strong>结果逐层回流</strong>：小二任务态 → 本周任务总结 → Leader 的华东区进度 → Leader 的 Q2 目标看板。张总不需要追着问进度，看板自己会更新。<strong>这就是"Q 级目标 → 小二动作"的完整贯通。</strong>',
+  html: () => sceneLeader_board(),
+  afterMount: (el) => animateBoardUpdate(el)
+});
+
+/* ============ Act 5 — 尾声 ============ */
+STEPS.push({
+  act: 5, role: 'summary',
+  narrator: '演示结束。从<strong>平台自动识别 gap、Leader 授权策略</strong>到小二完成首批执行，<strong>全程 3 分钟</strong>——真实上线后，这是"数小时到数周"的工作被压缩到分钟级。',
+  html: () => sceneSummary()
+});
+
+/* ============ 各场景渲染函数 ============ */
+
+/* ---- Leader 指挥台基础骨架 ---- */
+function leaderFrame(centerHtml, rightHtml) {
+  return `
+    <div class="scene-wrap">
+      <div class="scene-grid-leader">
+        <div class="leader-main">
+          <div class="lm-scroll">${centerHtml}</div>
+          ${leaderChatBar()}
+        </div>
+        <div>${rightHtml || ''}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* Leader 端自然语言输入——用于追问策略 / 调整策略 / 下发突发命令 */
+function leaderChatBar() {
+  return `
+    <div class="chat-bar">
+      <div class="ch-row">
+        <span class="ch-role-label">💬 张总问章鱼</span>
+        <textarea rows="1" placeholder="自然语言追问 / 调整策略 / 下发突发命令 ——— 例：本周华东毛利加码到 15.2%，立即优先执行"></textarea>
+        <button class="ch-send" title="发送">↑</button>
+      </div>
+      <div class="ch-hints">
+        <span class="ch-hint">为什么推荐策略 C？</span>
+        <span class="ch-hint">把策略 C 预算上限下调 10%</span>
+        <span class="ch-hint urgent">🚨 水产品类本周冲 +30%，立即加码</span>
+        <span class="ch-hint urgent">🚨 暂停 B 方案，切回保毛利</span>
+        <span class="ch-hint">生鲜 gap 按城市再拆一次</span>
+      </div>
+    </div>
+  `;
+}
+
+function sceneLeader_input() {
+  return leaderFrame(`
+    <div class="auto-banner mb-3">
+      <span class="ab-dot"></span>
+      <div>
+        <strong>平台已自动拉通 Q2 全团队 KPI / 业务指标 / 目标值与阶段节奏</strong>
+        ——数据源：经营中台 × 财务预算 × 商品/供应链/营销/履约 各域指标库 · 每 30 min 刷新 · 最后更新 3 min 前
+      </div>
+    </div>
+
+    <div class="panel mb-3">
+      <div class="panel-header">
+        <div class="panel-title">📊 Q2 经营目标与 gap 自动盘点</div>
+        <span class="chip chip-muted">2026 Q2 · 剩余 72 天</span>
+      </div>
+      <div class="panel-body">
+        <div class="text-xs text-muted mb-2" style="letter-spacing:0.5px; text-transform:uppercase; font-weight:600;">按一级业务线 · 平台自动读取</div>
+
+        <div class="kpi-row gap-critical">
+          <div>
+            <div class="kp-name">生鲜类目 GMV</div>
+            <div class="kp-sub">负责人：商品·生鲜 PM · 华东/华北/华南 3 城联动</div>
+          </div>
+          <div class="kp-val">进度 63%</div>
+          <div class="kp-bar"><div class="fill" style="width:63%"></div></div>
+          <div class="text-xs" style="line-height:1.5">
+            <div>目标 50.4 亿 · 基线 42 亿</div>
+            <div style="color:var(--muted)">当期预计落地 47.1 亿</div>
+          </div>
+          <span class="chip chip-danger kp-tag">gap −3.3 亿</span>
+        </div>
+
+        <div class="kpi-row gap-warning">
+          <div>
+            <div class="kp-name">生鲜毛利率</div>
+            <div class="kp-sub">约束指标 · 不得低于 14.8%</div>
+          </div>
+          <div class="kp-val">当前 14.6%</div>
+          <div class="kp-bar"><div class="fill" style="width:72%"></div></div>
+          <div class="text-xs" style="line-height:1.5">
+            <div>目标 ≥ 14.8%</div>
+            <div style="color:var(--muted)">已临近阈值</div>
+          </div>
+          <span class="chip chip-warning kp-tag">−0.2pp 承压</span>
+        </div>
+
+        <div class="kpi-row gap-ok">
+          <div>
+            <div class="kp-name">日用百货 GMV</div>
+            <div class="kp-sub">负责人：商品·日百 PM</div>
+          </div>
+          <div class="kp-val">进度 78%</div>
+          <div class="kp-bar"><div class="fill" style="width:78%"></div></div>
+          <div class="text-xs" style="line-height:1.5">
+            <div>目标 38 亿 · 基线 33 亿</div>
+            <div style="color:var(--muted)">当期预计落地 38.4 亿</div>
+          </div>
+          <span class="chip chip-success kp-tag">+0.4 亿 超额</span>
+        </div>
+
+        <div class="kpi-row gap-warning">
+          <div>
+            <div class="kp-name">履约时效达成率</div>
+            <div class="kp-sub">平台核心体验指标</div>
+          </div>
+          <div class="kp-val">92.1%</div>
+          <div class="kp-bar"><div class="fill" style="width:92%"></div></div>
+          <div class="text-xs" style="line-height:1.5">
+            <div>目标 ≥ 94%</div>
+            <div style="color:var(--muted)">华东次日达拖后</div>
+          </div>
+          <span class="chip chip-warning kp-tag">gap −1.9pp</span>
+        </div>
+
+        <div class="kpi-row gap-ok">
+          <div>
+            <div class="kp-name">新客首单转化</div>
+            <div class="kp-sub">增长营销 · 拉新漏斗</div>
+          </div>
+          <div class="kp-val">24.7%</div>
+          <div class="kp-bar"><div class="fill" style="width:103%; max-width:100%"></div></div>
+          <div class="text-xs" style="line-height:1.5">
+            <div>目标 ≥ 24%</div>
+            <div style="color:var(--muted)">略超目标</div>
+          </div>
+          <span class="chip chip-success kp-tag">达成</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="gap-highlight">
+      <div class="gh-icon">!</div>
+      <div style="flex:1">
+        <div class="gh-title">🐙 章鱼自动识别：本期最关键 gap = 「Q2 生鲜类目 GMV −3.3 亿」（毛利约束下）</div>
+        <div class="gh-body">
+          · 华东牛奶、华北肉禽、华南水果是主要 gap 来源（占差额 71%）<br>
+          · 去年同期相似 gap 曾以"活动 + 供给扩容组合拳"修复 · 历史成功率 73%<br>
+          · <strong>章鱼将自动进入策略生成流程</strong>，并行征询 5 位一级专家 · 无需你手工下目标，只需授权或调整边界
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button class="btn btn-primary" onclick="goNext()">▶ 授权章鱼生成策略选项</button>
+          <button class="btn btn-outline">追加约束 / 边界</button>
+          <button class="btn btn-ghost">查看完整 gap 明细</button>
+        </div>
+      </div>
+    </div>
+  `, `
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">🧭 Leader 日常动作</div></div>
+      <div class="panel-body" style="font-size:12.5px; line-height:1.8; color: var(--ink-soft);">
+        <div>· <strong style="color:var(--ink)">授权</strong>系统生成的策略</div>
+        <div>· <strong style="color:var(--ink)">调边界</strong>（预算 / 毛利 / 风险红线）</div>
+        <div>· <strong style="color:var(--ink)">看偏差</strong>、批重大动作</div>
+        <div style="color:var(--muted); margin-top:8px; font-size:11.5px">
+          日常不需要手工从零下目标；特殊专项目标仍可手工追加。
+        </div>
+      </div>
+    </div>
+    <div class="panel mt-3">
+      <div class="panel-header"><div class="panel-title">⚠️ 待你处理</div></div>
+      <div class="panel-body">
+        <div class="text-sm" style="line-height:1.9">
+          <div><span class="chip chip-danger">1</span> 关键 gap 待授权策略</div>
+          <div><span class="chip chip-warning">3</span> 跨域冲突待裁决</div>
+          <div><span class="chip chip-danger">1</span> CRITICAL 动作待批</div>
+          <div><span class="chip chip-info">5</span> 本周小二复盘</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel mt-3">
+      <div class="panel-header"><div class="panel-title">➕ 手动追加</div></div>
+      <div class="panel-body" style="font-size:12px; line-height:1.7; color:var(--muted);">
+        如需临时新增专项目标（如突发促销 / 专项治理），可点击
+        <span class="chip chip-muted" style="margin:0 2px;">手工下目标</span>
+        进入表单。平时不建议使用。
+      </div>
+    </div>
+  `);
+}
+
+function sceneLeader_thinking() {
+  return leaderFrame(`
+    <div class="panel mb-3">
+      <div class="panel-header">
+        <div class="panel-title">🎯 Q2 生鲜 GMV gap −3.3 亿（毛利 ≥ 14.8%）</div>
+        <span class="chip chip-accent">章鱼工作中</span>
+      </div>
+      <div class="panel-body" style="background: linear-gradient(180deg, var(--pale) 0%, #fff 100%);">
+        <div class="flex items-center gap-3">
+          <div class="agent-avatar octopus lg thinking">🐙</div>
+          <div>
+            <div class="font-semibold">章鱼大脑正在并行征询 5 位一级专家...</div>
+            <div class="text-xs text-muted mt-2">主缺口：华东牛奶 / 华北肉禽 / 华南水果（合计 71%） · 约束：毛利不破 14.8% · 预计 15 秒内完成汇总</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">👥 参与专家</div>
+        <span class="text-xs text-muted">点击任一专家可展开其详细建议</span>
+      </div>
+      <div class="panel-body">
+        <div id="expertList" class="flex flex-col gap-2"></div>
+      </div>
+    </div>
+  `);
+}
+
+/* 5 位一级专家的详细结构化建议——默认折叠，点击展开，用以建立信任度 */
+const EXPERT_OUTPUTS = {
+  biz: {
+    diagnosis: 'Q2 生鲜 GMV 预计落地 47.1 亿，相对 50.4 亿目标缺口 3.3 亿。拆解后发现缺口集中于 3 个点：<strong>华东牛奶 −1.4 亿 · 华北肉禽 −1.1 亿 · 华南水果 −0.8 亿</strong>，合计占总 gap 的 71%。其余品类基本维持节奏。',
+    evidence: '同比数据、近 4 周趋势、主要竞对份额变化、城市×品类矩阵',
+    actions: ['按"华东牛奶 > 华北肉禽 > 华南水果"的优先级组织修复', '其余品类保留节奏，不分散资源'],
+    impact: '若三大缺口修复到位，预计补回 2.1 亿 gap（约 64%）',
+    risks: '华南水果受天气影响存在不确定性，需预留 1 次策略重评节点',
+    confidence: 85
+  },
+  goods: {
+    diagnosis: '华东牛奶 SKU 宽度不足（较头部竞对少 18%），长尾乳品缺失严重；华北肉禽冷鲜品类头部 SKU 缺 12 个主力款。',
+    evidence: 'SKU 丰富度扫描、头部商家供货缺口数据、用户搜索未命中词',
+    actions: ['新增 2000 SKU，重点落在乳品 / 肉禽冷鲜 / 进口水果', '联动招商团队，3 周内完成头部商家建链'],
+    impact: '结构性补齐后，预计 GMV +12% ~ +15%',
+    risks: '新 SKU 首周销量爬坡通常需 2-3 周，短期 GMV 贡献滞后',
+    confidence: 78
+  },
+  mkt: {
+    diagnosis: 'Q2 生鲜当前无大型活动 cover，历史相似 gap 以"活动 + 供给"组合修复的成功率 73%。单靠自然流量难以覆盖缺口。',
+    evidence: '历史活动 ROI、类目 push 节奏、新客漏斗数据',
+    actions: ['5 月中、6 月初各安排一场生鲜品类周', '新客权益重点聚焦水果 / 乳品 2 个高频入口'],
+    impact: '单场活动 GMV 拉动 +8% ~ +12%',
+    risks: '活动期间毛利承压，需与供给侧锁价配合；预算消耗中高',
+    confidence: 82
+  },
+  supply: {
+    diagnosis: '华东仓牛奶日均出货已接近仓容峰值，若执行扩容方案，必须提前锁定上游产能与仓内分拣线。',
+    evidence: '仓储利用率、上游合约剩余、历史补货滞后案例',
+    actions: ['与蒙牛 / 光明锁 Q2 增量 4200 万', '华东仓增 2 条分拣线并调整班次，保证次日达'],
+    impact: '保障扩容方案可落地，避免缺货率回升至 >0.8%',
+    risks: '若产能锁定比例过高，月末存货压力上升；需设置动态回调机制',
+    confidence: 88
+  },
+  price: {
+    diagnosis: '生鲜头部 12 个 SKU 价格力弱于主要竞对 3% ~ 7%，毛利约束下整体调价空间有限，只能走结构化调价。',
+    evidence: '价格力扫描、竞对实时价、破价归因模型',
+    actions: ['对破价 SKU 采用"临时价格卡 + 会员专享"组合', '设置毛利保护阈值，触及自动回价'],
+    impact: '头部 SKU 转化率 +2pp ~ +4pp',
+    risks: '会员专享可能稀释整体毛利率约 0.1pp，需纳入整体测算',
+    confidence: 75
+  }
+};
+
+function animateExpertsThinking(el) {
+  const experts = [
+    { id:'biz',    avatar:'📊', name:'经营分析专家', sub:'目标追踪 · 异常识别 · 归因分析' },
+    { id:'goods',  avatar:'🛒', name:'商品经营专家', sub:'宫格规划 · 选品 · 链接诊断' },
+    { id:'mkt',    avatar:'🎯', name:'增长营销专家', sub:'场景活动 · 权益设计 · 城市经营' },
+    { id:'supply', avatar:'📦', name:'供应链计划专家', sub:'网络规划 · 补货 · 库存健康' },
+    { id:'price',  avatar:'💰', name:'价格管理专家', sub:'价格查询 · 诊断 · 合规管控' }
+  ];
+  const host = el.querySelector('#expertList');
+  experts.forEach((ex, i) => {
+    const row = document.createElement('div');
+    row.className = 'expert-row';
+    row.style.opacity = '0';
+    row.innerHTML = `
+      <div class="exr-head" onclick="toggleExpertDetail('${ex.id}')">
+        <div class="agent-avatar expert thinking">${ex.avatar}</div>
+        <div style="flex:1; min-width:0;">
+          <div class="font-semibold text-sm">${ex.name}</div>
+          <div class="text-xs text-muted mt-1">${ex.sub}</div>
+        </div>
+        <div class="exr-status" id="st-${ex.id}">
+          <span class="spinner" style="color: var(--accent);"></span>
+          <span>分析中...</span>
+        </div>
+        <span class="exr-caret" id="ca-${ex.id}" style="opacity:0;">›</span>
+      </div>
+      <div class="exr-detail" id="dt-${ex.id}">
+        ${renderExpertDetail(ex.id)}
+      </div>
+    `;
+    host.appendChild(row);
+    setTimeout(() => { row.style.transition = 'opacity 0.3s'; row.style.opacity = '1'; }, i * 180);
+    setTimeout(() => {
+      const st = row.querySelector(`#st-${ex.id}`);
+      const ca = row.querySelector(`#ca-${ex.id}`);
+      if (st) st.innerHTML = '<span style="color: var(--success); font-weight:600;">✓ 已返回建议</span><span class="text-xs text-muted" style="margin-left:6px;">点击查看详情</span>';
+      if (ca) ca.style.opacity = '1';
+      row.querySelector('.agent-avatar').classList.remove('thinking');
+      row.classList.add('ready');
+    }, 1400 + i * 260);
+  });
+}
+
+function renderExpertDetail(id) {
+  const o = EXPERT_OUTPUTS[id];
+  if (!o) return '';
+  return `
+    <div class="exr-detail-inner">
+      <div class="exd-row">
+        <div class="exd-label">诊断结论</div>
+        <div class="exd-value">${o.diagnosis}</div>
+      </div>
+      <div class="exd-row">
+        <div class="exd-label">判断依据</div>
+        <div class="exd-value text-muted">${o.evidence}</div>
+      </div>
+      <div class="exd-row">
+        <div class="exd-label">建议动作</div>
+        <div class="exd-value">
+          <ul class="exd-list">
+            ${o.actions.map(a => `<li>${a}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div class="exd-grid">
+        <div>
+          <div class="exd-label">预估影响</div>
+          <div class="exd-value" style="color:var(--success); font-weight:600;">${o.impact}</div>
+        </div>
+        <div>
+          <div class="exd-label">风险点</div>
+          <div class="exd-value" style="color:var(--ink-soft);">${o.risks}</div>
+        </div>
+        <div>
+          <div class="exd-label">置信度</div>
+          <div class="exd-confidence">
+            <div class="exd-conf-bar"><div class="fill" style="width:${o.confidence}%"></div></div>
+            <span>${o.confidence}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleExpertDetail(id) {
+  const row = document.querySelector(`#dt-${id}`);
+  if (!row) return;
+  const parent = row.closest('.expert-row');
+  if (!parent || !parent.classList.contains('ready')) return;
+  parent.classList.toggle('expanded');
+}
+window.toggleExpertDetail = toggleExpertDetail;
+
+function sceneLeader_strategies() {
+  const sel = state.selectedStrategy;
+  return leaderFrame(`
+    <div class="panel mb-3">
+      <div class="panel-header">
+        <div class="panel-title">🎯 Q2 生鲜 GMV +20%（毛利不降）</div>
+        <span class="chip chip-success">章鱼已返回 3 条策略</span>
+      </div>
+      <div class="panel-body">
+        <div class="text-sm text-muted mb-3" style="line-height:1.7">
+          <strong style="color: var(--ink)">🐙 章鱼大脑：</strong>已汇总 5 位专家结论，向您提出 3 条策略选项。请选择一条进入执行阶段，或追加约束条件重新规划。
+        </div>
+
+        <div class="strategy-card ${sel==='A'?'selected':''}" onclick="selectStrategy('A')">
+          <div class="sc-radio"></div>
+          <div class="sc-head">
+            <div class="sc-num">A</div>
+            <div class="sc-title">供给扩容主导</div>
+            <span class="chip chip-info sc-tag">风险低</span>
+          </div>
+          <div class="text-sm" style="color:var(--ink-soft); line-height:1.6;">
+            新增 2000 SKU · 2 个新城市上线 · 主要依靠招商 + 供应链承接
+          </div>
+          <div class="sc-metric">
+            <div><div class="label">GMV 预期</div><div class="value accent">+18%~+22%</div></div>
+            <div><div class="label">预算消耗</div><div class="value">中</div></div>
+            <div><div class="label">执行复杂度</div><div class="value">低</div></div>
+            <div><div class="label">毛利影响</div><div class="value">持平</div></div>
+          </div>
+        </div>
+
+        <div class="strategy-card mt-3 ${sel==='B'?'selected':''}" onclick="selectStrategy('B')">
+          <div class="sc-radio"></div>
+          <div class="sc-head">
+            <div class="sc-num">B</div>
+            <div class="sc-title">活动加码主导</div>
+            <span class="chip chip-warning sc-tag">毛利承压</span>
+          </div>
+          <div class="text-sm" style="color:var(--ink-soft); line-height:1.6;">
+            3 场大促 + 品类周 · 权益 + 流量集中释放
+          </div>
+          <div class="sc-metric">
+            <div><div class="label">GMV 预期</div><div class="value accent">+15%~+25%</div></div>
+            <div><div class="label">预算消耗</div><div class="value">高</div></div>
+            <div><div class="label">执行复杂度</div><div class="value">中</div></div>
+            <div><div class="label">毛利影响</div><div class="value" style="color: var(--danger)">-0.5pp</div></div>
+          </div>
+        </div>
+
+        <div class="strategy-card mt-3 ${sel==='C'?'selected':''}" onclick="selectStrategy('C')">
+          <div class="sc-radio"></div>
+          <div class="sc-head">
+            <div class="sc-num">C</div>
+            <div class="sc-title">组合拳（A + B 按 6:4 资源配比）</div>
+            <span class="chip chip-accent sc-tag">🐙 章鱼推荐</span>
+          </div>
+          <div class="text-sm" style="color:var(--ink-soft); line-height:1.6;">
+            供给扩容打底 + 两场精准活动放大 · 降低单一路径风险
+          </div>
+          <div class="sc-metric">
+            <div><div class="label">GMV 预期</div><div class="value accent">+22%~+28%</div></div>
+            <div><div class="label">预算消耗</div><div class="value">中高</div></div>
+            <div><div class="label">执行复杂度</div><div class="value">高</div></div>
+            <div><div class="label">毛利影响</div><div class="value">持平</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `, `
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">⚖️ 章鱼裁决依据</div></div>
+      <div class="panel-body" style="font-size:12.5px; line-height:1.75;">
+        <div><strong class="text-accent">为何推荐 C：</strong></div>
+        <div class="text-muted mt-2">1. 毛利约束下 B 方案独立风险较高<br>2. A 方案 GMV 上限不够<br>3. 组合拳历史成功率 73%（10 个相似案例）</div>
+        <div class="mt-3"><strong>风险提示：</strong></div>
+        <div class="text-muted mt-2">执行复杂度高，需首期 3 周内对齐 4 个城市 + 3 个类目 PM 的执行节奏</div>
+      </div>
+    </div>
+    <div class="panel mt-3">
+      <div class="panel-header"><div class="panel-title">📜 同类历史案例</div></div>
+      <div class="panel-body" style="font-size:12px; line-height:1.7; color: var(--ink-soft);">
+        <div>· 2025 Q2 日用组合拳：达成 108%</div>
+        <div class="mt-2">· 2025 Q4 生鲜 A 方案：达成 96%</div>
+        <div class="mt-2">· 2024 Q3 生鲜 B 方案：GMV +19% 但毛利 -0.8pp</div>
+      </div>
+    </div>
+  `);
+}
+
+function selectStrategy(id) {
+  state.selectedStrategy = id;
+  unblockNext();
+  render();
+}
+
+function sceneLeader_confirm() {
+  const sel = state.selectedStrategy || 'C';
+  const names = { A: '供给扩容主导', B: '活动加码主导', C: '组合拳（A + B）' };
+  return leaderFrame(`
+    <div class="panel mb-3">
+      <div class="panel-header">
+        <div class="panel-title">🎯 确认 Q2 策略 · 选项 ${sel}</div>
+        <span class="chip chip-danger">CRITICAL · 需 Leader 亲自确认</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="confirm-card">
+          <div class="cc-title">⚠️ 此操作属于高风险动作，需要你确认</div>
+          <div class="text-sm" style="line-height:1.75;">
+            批准策略 <strong class="text-accent">${sel}（${names[sel]}）</strong>将产生以下系统级动作：
+          </div>
+          <div class="mt-3" style="font-size:12.5px; line-height:1.9;">
+            <div>📍 <strong>预算锁定：</strong>¥ 1.8 亿（CRITICAL · Leader 确认）</div>
+            <div>📍 <strong>任务自动拆解：</strong>8 个具体任务 → 华东/华北/华南区 6 位小二</div>
+            <div>📍 <strong>资源位调度：</strong>首页 2 个广告位 + 生鲜专区（首 2 周）</div>
+            <div>📍 <strong>商家承诺：</strong>向 42 家核心商家发出扩容邀请</div>
+          </div>
+          <div class="text-xs text-muted mt-3" style="padding: 8px 10px; background: #fff; border-radius: 4px;">
+            ✓ 确认后全链路留痕，每个子任务都可追溯到本次决策，随时复演。
+          </div>
+          <div class="cc-actions">
+            <button class="btn btn-primary" style="padding: 10px 22px;" onclick="confirmStrategy()">✓ 批准并执行</button>
+            <button class="btn btn-outline" onclick="goPrev()">返回重选</button>
+            <button class="btn btn-ghost" style="color:var(--muted);">保存为草稿</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">📊 批准后的预期影响</div></div>
+      <div class="panel-body">
+        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card"><div class="label">GMV</div><div class="value">+24%</div><div class="delta up">↑ 超越目标</div></div>
+          <div class="stat-card"><div class="label">毛利率</div><div class="value">14.9%</div><div class="delta flat">持平</div></div>
+          <div class="stat-card"><div class="label">动员小二</div><div class="value">6 人</div><div class="delta up">↑ 华东+华北+华南</div></div>
+          <div class="stat-card"><div class="label">新商家</div><div class="value">42 家</div><div class="delta up">↑ 扩容 8%</div></div>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function confirmStrategy() {
+  unblockNext();
+  const btn = event.target;
+  btn.innerText = '✓ 已批准 · 任务分发中...';
+  btn.disabled = true;
+  setTimeout(goNext, 600);
+}
+
+/* ---- Act 2 任务分发 ---- */
+function sceneDispatch() {
+  return `
+    <div class="scene-wrap" style="display: flex; align-items: center; justify-content: center; flex-direction: column;">
+      <div style="max-width: 1000px; width: 100%;">
+        <div class="text-center mb-4" style="text-align:center">
+          <div class="chip chip-accent" style="font-size: 12px;">🐙 章鱼正在自动拆解任务</div>
+          <h2 style="margin: 12px 0 6px; color: var(--navy); font-size: 22px;">Q 级目标 → 小二动作：一条链路贯通</h2>
+          <p class="text-muted" style="margin:0">每个节点都可追溯到本次季度目标，随时复演</p>
+        </div>
+        <div class="dispatch-tree" id="dispatchTree">
+          <div class="tree-level">
+            <div class="tree-node root" data-d="0">Q2 生鲜 GMV +20%（毛利不降）</div>
+          </div>
+          <div class="tree-line"></div>
+          <div class="tree-level">
+            <div class="tree-node level-1" data-d="1">策略：供给扩容 60%</div>
+            <div class="tree-node level-1" data-d="1">策略：活动加码 40%</div>
+          </div>
+          <div class="tree-line"></div>
+          <div class="tree-level">
+            <div class="tree-node level-2" data-d="2">华东 · 牛奶品类</div>
+            <div class="tree-node level-2" data-d="2">华东 · 烘焙品类</div>
+            <div class="tree-node level-2" data-d="2">华北 · 肉禽品类</div>
+            <div class="tree-node level-2" data-d="2">华北 · 冻品</div>
+            <div class="tree-node level-2" data-d="2">华南 · 水果</div>
+          </div>
+          <div class="tree-line"></div>
+          <div class="tree-level" id="xiaoerRow">
+            <div class="tree-node level-3" data-d="3">小二·李华<br><span class="text-xs text-muted">华东牛奶</span></div>
+            <div class="tree-node level-3" data-d="3">小二·王辉<br><span class="text-xs text-muted">华东烘焙</span></div>
+            <div class="tree-node level-3" data-d="3">小二·陈磊<br><span class="text-xs text-muted">华北肉禽</span></div>
+            <div class="tree-node level-3" data-d="3">小二·刘静<br><span class="text-xs text-muted">华北冻品</span></div>
+            <div class="tree-node level-3" data-d="3">小二·周丹<br><span class="text-xs text-muted">华南水果</span></div>
+          </div>
+          <div class="text-center mt-4" style="text-align:center;">
+            <div class="text-sm text-muted" id="dispatchMsg" style="opacity:0; transition: opacity 0.5s;">
+              ✓ 任务分发完成。下一步：跟随小二李华进入任务态 →
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function animateDispatchTree(el) {
+  const nodes = el.querySelectorAll('.tree-node');
+  nodes.forEach((n, i) => {
+    setTimeout(() => n.classList.add('reveal'), 100 + i * 120);
+  });
+  setTimeout(() => {
+    const msg = el.querySelector('#dispatchMsg');
+    if (msg) msg.style.opacity = '1';
+  }, 100 + nodes.length * 120 + 200);
+}
+
+/* ---- Act 2 小二首页 ---- */
+function sceneXiaoer_home() {
+  return `
+    <div class="scene-wrap">
+      <div class="scene-grid-2">
+        <div class="side-nav">
+          <div class="nav-section-label">我的工作</div>
+          <div class="nav-item active"><span class="icon">🏠</span>超喵首页</div>
+          <div class="nav-item"><span class="icon">📋</span>任务中心 <span class="chip chip-accent" style="margin-left:auto">1 新</span></div>
+          <div class="nav-item"><span class="icon">💬</span>专家直达</div>
+          <div class="nav-section-label">我的专家</div>
+          <div class="nav-item"><span class="icon">💰</span>价格专家</div>
+          <div class="nav-item"><span class="icon">🛒</span>商品专家</div>
+          <div class="nav-item"><span class="icon">📦</span>供应链专家</div>
+          <div class="nav-item"><span class="icon">🎯</span>营销专家</div>
+          <div class="nav-section-label">我的数据</div>
+          <div class="nav-item"><span class="icon">📊</span>华东生鲜看板</div>
+          <div class="nav-item"><span class="icon">🏪</span>我的商家（28）</div>
+        </div>
+        <div class="xiao-main">
+         <div class="xm-scroll">
+          <div class="xiao-header">
+            <div class="greet">上午好 · 2026-04-19</div>
+            <div class="name">李华，你今天有 1 条来自 Leader 的新任务</div>
+            <div class="sub">华东生鲜 · 管理商品 1,248 个 · 服务商家 28 家</div>
+          </div>
+
+          <div class="stat-grid mb-4">
+            <div class="stat-card">
+              <div class="label">昨日 GMV（华东·生鲜）</div>
+              <div class="value">¥ 8,420万</div>
+              <div class="delta down">↓ -8.3% vs 前日</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Q2 目标达成</div>
+              <div class="value">18%</div>
+              <div class="delta flat">正常进度</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">高风险商家</div>
+              <div class="value">2 家</div>
+              <div class="delta flat">持续关注</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">本周新任务</div>
+              <div class="value">3</div>
+              <div class="delta up">+1 Leader 分发</div>
+            </div>
+          </div>
+
+          <div class="panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">🔔 今日优先任务</div>
+              <span class="chip chip-accent">AI 主动发现 + Leader 分发</span>
+            </div>
+            <div class="panel-body">
+
+              <div class="task-item new" onclick="goNext()">
+                <div class="ti-head">
+                  <span class="chip chip-accent">Leader 分发</span>
+                  <span class="chip chip-danger">P0</span>
+                  <span class="ti-title" style="flex:1">华东区牛奶品类补货扩容 + 配合大促</span>
+                  <span class="text-xs text-muted">2 分钟前</span>
+                </div>
+                <div class="ti-sub">
+                  🎯 来自张总 Q2 目标 · 策略 C · 华东拆解 &nbsp; · &nbsp; 参与专家：商品 / 供应链 / 价格 / 履约
+                </div>
+              </div>
+
+              <div class="task-item">
+                <div class="ti-head">
+                  <span class="chip chip-info">AI 主动</span>
+                  <span class="chip chip-warning">P1</span>
+                  <span class="ti-title">华东区 12 个 SKU 破价异常归因</span>
+                </div>
+                <div class="ti-sub">🐙 章鱼检测到破价同比 +15%，已初步归因至 3 个主要竞对降价</div>
+              </div>
+
+              <div class="task-item">
+                <div class="ti-head">
+                  <span class="chip chip-muted">自发起</span>
+                  <span class="chip chip-warning">P1</span>
+                  <span class="ti-title">【跟踪中】沃尔玛生鲜供应商季度谈判</span>
+                </div>
+                <div class="ti-sub">下次协商：2026-04-22 · 供应链专家已准备谈判话术</div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">📊 AI 初步归因（昨日 GMV -8.3%）</div>
+              <span class="chip chip-muted">单域 · 经营分析专家</span>
+            </div>
+            <div class="panel-body">
+              <div class="flex gap-3">
+                <div style="flex:1; padding: 10px; background: var(--pale); border-radius:6px;">
+                  <div class="text-xs text-muted">流量</div>
+                  <div class="font-bold" style="font-size:20px; color: var(--danger);">-3%</div>
+                  <div class="text-xs text-muted mt-2">搜索降权可能</div>
+                </div>
+                <div style="flex:1; padding: 10px; background: var(--pale); border-radius:6px;">
+                  <div class="text-xs text-muted">转化</div>
+                  <div class="font-bold" style="font-size:20px; color: var(--danger);">-4%</div>
+                  <div class="text-xs text-muted mt-2">4 个头部 SKU 破价</div>
+                </div>
+                <div style="flex:1; padding: 10px; background: var(--pale); border-radius:6px;">
+                  <div class="text-xs text-muted">客单</div>
+                  <div class="font-bold" style="font-size:20px; color: var(--danger);">-1%</div>
+                  <div class="text-xs text-muted mt-2">单量结构波动</div>
+                </div>
+              </div>
+            </div>
+          </div>
+         </div>
+         ${xiaoerChatBar('home')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* 小二端自然语言输入——专家直达 / 追问数据 / 手工发起任务 */
+function xiaoerChatBar(scene) {
+  const hints = scene === 'task' ? `
+    <span class="ch-hint">为什么章鱼推荐 ¥13.9？</span>
+    <span class="ch-hint">换成只调 TOP 3 SKU 试试</span>
+    <span class="ch-hint">把毛利阈值放宽到 13%</span>
+    <span class="ch-hint">叫供应链专家再看一遍库存</span>
+  ` : `
+    <span class="ch-hint">昨天 GMV 为什么掉 8%？</span>
+    <span class="ch-hint">华东牛奶补货多久能到仓？</span>
+    <span class="ch-hint">帮我起草给蒙牛的谈判话术</span>
+    <span class="ch-hint">把沃尔玛季度谈判再往前挪 1 天</span>
+  `;
+  return `
+    <div class="chat-bar">
+      <div class="ch-row">
+        <span class="ch-role-label">💬 问章鱼 / 专家</span>
+        <textarea rows="1" placeholder="问数据、问策略、找专家、起草话术、自建任务 —— 直接用自然语言"></textarea>
+        <button class="ch-send" title="发送">↑</button>
+      </div>
+      <div class="ch-hints">${hints}</div>
+    </div>
+  `;
+}
+
+/* ---- Act 3 任务态 ---- */
+function taskFrame(threadHtml, rightHtml) {
+  return `
+    <div class="scene-wrap">
+      <div class="scene-grid-3">
+        <div class="panel" style="overflow: auto;">
+          <div class="panel-header"><div class="panel-title">📋 任务清单</div></div>
+          <div class="panel-body" style="padding: 12px;">
+            <div class="text-xs text-muted mb-2" style="letter-spacing:0.5px; font-weight:600;">进行中</div>
+            <div class="task-item active">
+              <div class="ti-head">
+                <span class="chip chip-accent">Leader</span>
+                <span class="chip chip-danger">P0</span>
+              </div>
+              <div class="ti-title">华东牛奶品类补货扩容 + 配合大促</div>
+              <div class="ti-sub">TSK-2026-04-19-00123</div>
+            </div>
+            <div class="text-xs text-muted mt-4 mb-2" style="letter-spacing:0.5px; font-weight:600;">跟踪中</div>
+            <div class="task-item">
+              <div class="ti-title">12 个 SKU 破价归因</div>
+              <div class="ti-sub">诊断中 · 3 专家参与</div>
+            </div>
+            <div class="task-item">
+              <div class="ti-title">沃尔玛季度谈判</div>
+              <div class="ti-sub">准备中 · 话术已就绪</div>
+            </div>
+            <div class="text-xs text-muted mt-4 mb-2" style="letter-spacing:0.5px; font-weight:600;">定时任务</div>
+            <div class="task-item">
+              <div class="ti-title">每周供应商评分</div>
+              <div class="ti-sub">每周五 18:00</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; min-height:0;">
+          <div class="panel" style="overflow: hidden; flex: 1 1 auto; display:flex; flex-direction:column; min-height:0;">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="chip chip-danger">P0</span>
+                华东牛奶品类补货扩容 + 配合大促
+              </div>
+              <span class="text-xs text-muted">TSK-2026-04-19-00123 · 来自 Leader 目标</span>
+            </div>
+            <div class="panel-body" style="overflow: auto; flex: 1 1 auto;">
+              <div class="thread" id="thread">
+                ${threadHtml}
+              </div>
+            </div>
+          </div>
+          ${xiaoerChatBar('task')}
+        </div>
+
+        <div class="panel" style="overflow:auto;">
+          <div class="panel-header"><div class="panel-title">🚀 执行进度</div></div>
+          <div class="panel-body" id="execPanel">
+            ${rightHtml}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function sceneTask_start() {
+  const thread = `
+    <div class="msg system">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar sm" style="background:var(--info); color:#fff;">📌</div>
+          <span class="name">任务中心</span>
+          <span class="role">system</span>
+          <span class="time">刚刚</span>
+        </div>
+        <div class="msg-content" style="font-size:12.5px; color: var(--ink-soft);">
+          来自 <strong>张总 Q2 目标 · 策略 C</strong> · 华东区·牛奶品类 · 目标 GMV +24%
+        </div>
+      </div>
+    </div>
+    <div class="msg octopus" id="routingMsg" style="opacity:0">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar octopus sm">🐙</div>
+          <span class="name">章鱼大脑</span>
+          <span class="role">协同路由</span>
+          <span class="time">正在思考...</span>
+        </div>
+        <div class="msg-content">
+          <div class="routing-card">
+            <div style="font-size:13.5px; line-height:1.7;">
+              <strong>理解任务</strong>：你需要在华东区完成牛奶品类的 <strong>补货扩容 + 大促配合</strong>，目标是支撑 Q2 GMV +20%。
+              <br><br>
+              <strong>我将拉起以下 4 位一级专家并行输出结构化建议</strong>：
+            </div>
+            <div class="routing-experts" id="routingExperts">
+              <div class="routing-expert-chip" data-ex="goods"><span class="dot"></span>🛒 商品经营专家</div>
+              <div class="routing-expert-chip" data-ex="supply"><span class="dot"></span>📦 供应链计划专家</div>
+              <div class="routing-expert-chip" data-ex="price"><span class="dot"></span>💰 价格管理专家</div>
+              <div class="routing-expert-chip" data-ex="fulfill"><span class="dot"></span>🚚 履约运营专家</div>
+            </div>
+            <div class="text-xs text-muted mt-3" style="padding-top:10px; border-top:1px dashed var(--line);">
+              并行征询 4 位专家（约 15 秒内返回）· 若出现高风险动作会自动加一步你的确认
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  const right = `
+    <div class="text-xs text-muted mb-3" style="letter-spacing:0.3px">任务尚未进入执行阶段</div>
+    <div class="exec-item pending">
+      <div class="ex-head">
+        <div class="agent-avatar sm expert">📦</div>
+        <div class="ex-name">补货 Skill</div>
+        <div class="ex-status">待命</div>
+      </div>
+      <div class="text-xs text-muted">将调用补货系统</div>
+    </div>
+    <div class="exec-item pending">
+      <div class="ex-head">
+        <div class="agent-avatar sm expert">🛒</div>
+        <div class="ex-name">建链 Skill</div>
+        <div class="ex-status">待命</div>
+      </div>
+      <div class="text-xs text-muted">将调用商品系统</div>
+    </div>
+    <div class="exec-item pending">
+      <div class="ex-head">
+        <div class="agent-avatar sm expert">💰</div>
+        <div class="ex-name">价格 Skill</div>
+        <div class="ex-status">待命</div>
+      </div>
+      <div class="text-xs text-muted">将调用价格系统（金额超阈值走审批）</div>
+    </div>
+  `;
+  return taskFrame(thread, right);
+}
+
+function animateRoutingCard(el) {
+  const msg = el.querySelector('#routingMsg');
+  if (msg) setTimeout(() => { msg.style.transition = 'opacity 0.4s'; msg.style.opacity = '1'; }, 200);
+  const chips = el.querySelectorAll('#routingExperts .routing-expert-chip');
+  chips.forEach((c, i) => {
+    setTimeout(() => c.classList.add('active'), 700 + i * 220);
+  });
+}
+
+function expertCardHtml(ex, idx) {
+  const ef = (label, val) => `<div class="expert-field"><div class="ef-label">${label}</div><div class="ef-value">${val}</div></div>`;
+  const chipConf = ex.needsConfirm
+    ? '<span class="chip chip-warning">需确认</span>'
+    : '<span class="chip chip-success">可执行</span>';
+  const chipConflict = ex.conflict ? '<span class="chip chip-danger">⚠ 与其他专家冲突</span>' : '';
+  // Default: collapsed；冲突卡默认展开以提醒用户
+  const uid = 'tex-' + (idx ?? Math.random().toString(36).slice(2,7));
+  const expandedClass = ex.conflict ? ' expanded' : '';
+  return `
+    <div class="msg expert collapsible${expandedClass}" id="${uid}">
+      <div class="msg-body">
+        <div class="msg-meta" onclick="toggleTaskExpert('${uid}')" style="cursor:pointer;">
+          <div class="agent-avatar expert sm">${ex.avatar}</div>
+          <span class="name">${ex.name}</span>
+          ${chipConf}
+          ${chipConflict}
+          <span class="time">置信度 ${ex.confidence}</span>
+          <span class="exr-caret" style="margin-left:auto; font-size:20px; color:var(--muted);">›</span>
+        </div>
+        <div class="msg-content msg-collapsible-body">
+          ${ef('诊断结论', ex.diagnosis)}
+          ${ef('建议动作', ex.actions)}
+          ${ef('预估影响', ex.impact)}
+          ${ef('风险点', ex.risks)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function toggleTaskExpert(id) {
+  const node = document.getElementById(id);
+  if (node) node.classList.toggle('expanded');
+}
+window.toggleTaskExpert = toggleTaskExpert;
+
+function sceneTask_experts() {
+  const experts = [
+    {
+      avatar: '🛒', name: '商品经营专家', role: 'EXPERT_GOODS', confidence: '0.86',
+      diagnosis: '华东牛奶头部品牌 SKU 数不足，建议扩容 12 个长尾 SKU、引入 3 家新供应商',
+      actions: '新增 SKU 清单（12 个） · 建链优先级 P0 · 配合大促页资源位',
+      impact: '周销量预计 +18~22% · 覆盖率 +8pp',
+      risks: '新 SKU 前 4 周动销率有不确定性',
+      needsConfirm: false
+    },
+    {
+      avatar: '📦', name: '供应链计划专家', role: 'EXPERT_SUPPLY', confidence: '0.91',
+      diagnosis: '华东仓当前库存健康，可承接 +25% 峰值 · 外部供应商响应周期 5 天',
+      actions: '安全库存由 3 天拉至 5 天 · 补货频次 2 日/次 → 日补货',
+      impact: '缺货率风险 -60% · 履约成本 +2%',
+      risks: '大促期末端仓压力，需配合履约专家评估',
+      needsConfirm: true
+    },
+    {
+      avatar: '💰', name: '价格管理专家', role: 'EXPERT_PRICE', confidence: '0.79',
+      diagnosis: '竞对价带 ¥12-14，主力 SKU 建议定价 ¥12.9 冲击 GMV',
+      actions: '主力 SKU 统一定价 ¥12.9 · 合规校验 ✓ · 单品毛利 17%',
+      impact: 'GMV +8~12% · 毛利率 -0.4pp',
+      risks: '⚠️ 与商品经营专家毛利建议存在定价差异',
+      needsConfirm: true, conflict: true
+    },
+    {
+      avatar: '🚚', name: '履约运营专家', role: 'EXPERT_FULFILL', confidence: '0.88',
+      diagnosis: '华东末端运力在 +25% 峰值下可承接，但次日达达成率可能降至 95%',
+      actions: '大促期间调度备份运力 · 优化华东 3 号仓装载顺序',
+      impact: '次日达 95% · 成本 +3%',
+      risks: '极端天气下末端延误风险',
+      needsConfirm: false
+    }
+  ];
+
+  const expertsHtml = experts.map(expertCardHtml).join('');
+
+  const thread = `
+    <div class="msg octopus">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar octopus sm">🐙</div>
+          <span class="name">章鱼大脑</span>
+          <span class="role">协同路由</span>
+          <span class="time">0.4s 前</span>
+        </div>
+        <div class="msg-content">
+          <div class="routing-card">
+            <div style="font-size:13px; line-height:1.6;">
+              4 位专家已返回建议（点击任一张卡可查看详情）：
+            </div>
+            <div class="routing-experts mt-3">
+              <div class="routing-expert-chip done"><span class="dot"></span>🛒 商品 ✓</div>
+              <div class="routing-expert-chip done"><span class="dot"></span>📦 供应链 ✓</div>
+              <div class="routing-expert-chip done"><span class="dot"></span>💰 价格 ✓</div>
+              <div class="routing-expert-chip done"><span class="dot"></span>🚚 履约 ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${expertsHtml}
+    <div class="msg octopus">
+      <div class="msg-body" style="border-left-color: var(--warning);">
+        <div class="msg-meta" style="background: var(--warning-soft);">
+          <div class="agent-avatar sm" style="background: var(--warning); color:#fff;">⚠️</div>
+          <span class="name">章鱼大脑</span>
+          <span class="role" style="color: var(--warning);">冲突识别</span>
+          <span class="time">实时</span>
+        </div>
+        <div class="msg-content">
+          <div style="font-size:13px; line-height:1.6;">
+            检测到<strong>定价结论冲突</strong>：价格专家建议 <code>¥12.9</code>（为冲 GMV），但商品专家评估要保毛利应 <code>¥13.9</code>。
+            <br><br>
+            正在按<strong>冲突裁决机制</strong>处理，请看下一步 →
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  const right = `
+    <div class="text-xs text-muted mb-3">等待冲突裁决 · 尚未进入执行</div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">📦</div><div class="ex-name">补货 Skill</div><div class="ex-status">待命</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">🛒</div><div class="ex-name">建链 Skill</div><div class="ex-status">待命</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">💰</div><div class="ex-name">价格 Skill</div><div class="ex-status">待命 · 待冲突裁决</div></div></div>
+  `;
+  return taskFrame(thread, right);
+}
+
+function sceneTask_conflict() {
+  const thread = `
+    <div class="msg conflict">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar sm" style="background: var(--warning); color:#fff;">⚖️</div>
+          <span class="name">章鱼大脑 · 冲突裁决</span>
+          <span class="time">关键节点</span>
+        </div>
+        <div class="msg-content">
+          <div class="text-sm" style="line-height:1.7;">
+            <strong>冲突类型</strong>：定价结论冲突（结论冲突）<br>
+            <strong>冲突专家</strong>：价格专家 ↔ 商品经营专家<br>
+            <strong>涉及 SKU</strong>：8 款主力牛奶产品
+          </div>
+
+          <div class="conflict-compare">
+            <div class="conflict-opt">
+              <div class="who">💰 价格专家（置信度 0.79）</div>
+              <div class="price">¥12.9</div>
+              <div class="reason">竞对价带对齐 · 冲 GMV +8~12% · 毛利率 -0.4pp</div>
+            </div>
+            <div class="conflict-opt recommended">
+              <div class="who">🛒 商品专家（置信度 0.86）</div>
+              <div class="price">¥13.9</div>
+              <div class="reason">保毛利率 · GMV +5~8% · 毛利率持平</div>
+            </div>
+          </div>
+
+          <div style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font-size:12.5px; line-height:1.7;">
+            <strong style="color:var(--navy)">🐙 章鱼裁决依据</strong><br>
+            <span style="color:var(--ink-soft)">
+              1. <strong>优先级规则</strong>：本任务继承自 Leader 目标，Leader 约束条件 = "毛利不降" → <strong>毛利优先于 GMV</strong><br>
+              2. <strong>置信度加权</strong>：商品专家 0.86 > 价格专家 0.79<br>
+              3. <strong>历史匹配</strong>：2024 Q3 类似场景中选 ¥13.9 的达成率 108% vs ¥12.9 的 94%<br>
+              <strong class="text-accent">→ 推荐采纳 ¥13.9（商品专家方案），但最终由您决定。</strong>
+            </span>
+          </div>
+
+          <div class="btn-group-inline">
+            <button class="btn-decision primary" onclick="resolveConflict('margin')">✓ 采纳 ¥13.9（章鱼推荐）</button>
+            <button class="btn-decision" onclick="resolveConflict('price')">采纳 ¥12.9（价格专家）</button>
+            <button class="btn-decision" onclick="resolveConflict('escalate')">升级给 Leader 裁决</button>
+          </div>
+          ${ state.conflictResolved ? `
+            <div class="mt-3" style="padding: 10px 12px; background: var(--success-soft); border-radius:6px; font-size:12.5px; color: var(--success);">
+              ✓ 你已选择：<strong>${conflictChoiceText()}</strong> · 裁决记录已沉淀为新规则候选 · 下一步生成统一方案 →
+            </div>` : ''
+          }
+        </div>
+      </div>
+    </div>
+  `;
+  const right = `
+    <div class="text-xs text-muted mb-3">等待冲突裁决 · 尚未进入执行</div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">📦</div><div class="ex-name">补货 Skill</div><div class="ex-status">待命</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">🛒</div><div class="ex-name">建链 Skill</div><div class="ex-status">待命</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">💰</div><div class="ex-name">价格 Skill</div><div class="ex-status">${state.conflictResolved ? '裁决已完成' : '待命 · 待裁决'}</div></div></div>
+  `;
+  return taskFrame(thread, right);
+}
+function conflictChoiceText() {
+  return ({ margin: '采纳 ¥13.9（毛利优先）', price: '采纳 ¥12.9（GMV 优先）', escalate: '升级 Leader' })[state.conflictChoice] || '';
+}
+function resolveConflict(choice) {
+  state.conflictChoice = choice;
+  state.conflictResolved = true;
+  unblockNext();
+  render();
+}
+
+function sceneTask_confirm() {
+  const thread = `
+    <div class="msg conflict" style="opacity:0.6">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar sm" style="background: var(--success); color:#fff;">✓</div>
+          <span class="name">冲突已裁决</span>
+          <span class="time">0.3s 前</span>
+        </div>
+        <div class="msg-content" style="font-size:12.5px; color: var(--ink-soft);">
+          你选择：<strong>${conflictChoiceText()}</strong> · 章鱼已将此裁决模式沉淀为规则候选，待人工复核后进入规则库。
+        </div>
+      </div>
+    </div>
+
+    <div class="msg octopus">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar octopus sm">🐙</div>
+          <span class="name">章鱼大脑 · 统一方案</span>
+          <span class="role">汇总表达</span>
+          <span class="time">刚刚</span>
+        </div>
+        <div class="msg-content">
+          <div style="background: var(--pale); padding: 12px 14px; border-radius: 6px; font-size:13px; line-height:1.8;">
+            <strong>本次任务将执行以下一揽子动作：</strong>
+            <br><br>
+            1. 📦 <strong>补货</strong>：安全库存由 3→5 天，日补货节奏（华东 3 号仓）<br>
+            2. 🛒 <strong>建链</strong>：12 个新 SKU · 优先级 P0 · 大促页资源位<br>
+            3. 💰 <strong>挂价</strong>：8 款主力 SKU 定价 <strong>¥13.9</strong>（采纳商品专家方案）<br>
+            4. 🚚 <strong>履约预案</strong>：备份运力调度 · 次日达目标 95%
+          </div>
+
+          <div class="confirm-card">
+            <div class="cc-title">⚠️ 需要你确认（高风险动作）</div>
+            <div class="text-sm" style="line-height:1.7;">
+              · <strong>挂价金额 × 数量</strong>：¥13.9 × 8 SKU × 预估周销 8 万件 ≈ ¥889 万<br>
+              · 单 SKU 预算未超阈值，<strong>小二确认即可</strong>（超阈值会自动升级 Leader）<br>
+              · 补货调整已在供应链系统幂等性检查通过 ✓<br>
+              · 所有动作全链路留痕，支持 15 分钟内一键回滚
+            </div>
+            <div class="cc-actions">
+              <button class="btn btn-primary" style="padding: 10px 24px;" onclick="confirmExec(this)">✓ 确认执行</button>
+              <button class="btn btn-outline">逐项修改</button>
+              <button class="btn btn-ghost" style="color: var(--muted);">我来接管（转纯人工）</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  const right = `
+    <div class="text-xs text-muted mb-3">方案已生成 · 等待确认后执行</div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">📦</div><div class="ex-name">补货 Skill</div><div class="ex-status">等待确认</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">🛒</div><div class="ex-name">建链 Skill</div><div class="ex-status">等待确认</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">💰</div><div class="ex-name">价格 Skill</div><div class="ex-status">等待确认</div></div></div>
+  `;
+  return taskFrame(thread, right);
+}
+
+function confirmExec(btn) {
+  btn.innerText = '✓ 已确认 · 正在下达...';
+  btn.disabled = true;
+  unblockNext();
+  setTimeout(goNext, 500);
+}
+
+function sceneTask_executing() {
+  const thread = `
+    <div class="msg octopus" style="opacity:0.6">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar sm" style="background: var(--success); color:#fff;">✓</div>
+          <span class="name">你已确认方案</span>
+          <span class="time">刚刚</span>
+        </div>
+        <div class="msg-content" style="font-size:12.5px; color:var(--ink-soft);">
+          章鱼已向 3 个执行系统并行派发指令 · 全链路留痕 ✓
+        </div>
+      </div>
+    </div>
+    <div class="msg octopus">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar octopus sm">🐙</div>
+          <span class="name">章鱼大脑 · 执行跟踪</span>
+          <span class="role">实时</span>
+          <span class="time" id="execTime">0 秒前</span>
+        </div>
+        <div class="msg-content">
+          <div style="font-size:13px; line-height:1.7;">
+            正在调度 3 个 Skill 并行执行。右侧实时回传状态与执行结果，全程可审计、可回滚。
+          </div>
+          <div id="resultArea"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  const right = `
+    <div class="text-xs text-muted mb-3" id="execHead">Skill 执行中 · 0/3 完成</div>
+    <div class="exec-item pending" id="ex-supply">
+      <div class="ex-head">
+        <div class="agent-avatar sm expert">📦</div>
+        <div class="ex-name">补货 Skill</div>
+        <div class="ex-status">待启动</div>
+      </div>
+      <div class="text-xs text-muted">补货单 ID：预生成中</div>
+      <div class="progress-bar"><div class="fill" style="width:0%"></div></div>
+    </div>
+    <div class="exec-item pending" id="ex-goods">
+      <div class="ex-head">
+        <div class="agent-avatar sm expert">🛒</div>
+        <div class="ex-name">建链 Skill</div>
+        <div class="ex-status">待启动</div>
+      </div>
+      <div class="text-xs text-muted">12 个 SKU 建链中</div>
+      <div class="progress-bar"><div class="fill" style="width:0%"></div></div>
+    </div>
+    <div class="exec-item pending" id="ex-price">
+      <div class="ex-head">
+        <div class="agent-avatar sm expert">💰</div>
+        <div class="ex-name">价格 Skill</div>
+        <div class="ex-status">待启动</div>
+      </div>
+      <div class="text-xs text-muted">挂价 ¥13.9 × 8 SKU</div>
+      <div class="progress-bar"><div class="fill" style="width:0%"></div></div>
+    </div>
+  `;
+  return taskFrame(thread, right);
+}
+
+function animateSkillExecution(el) {
+  const items = [
+    { id: 'ex-supply', label: '已生成补货单 BH-2026-04-19-00321' },
+    { id: 'ex-goods',  label: '12 个 SKU 建链成功 · 资源位已排期' },
+    { id: 'ex-price',  label: '8 款 SKU 挂价 ¥13.9 生效 · 合规校验 ✓' }
+  ];
+  let done = 0;
+  items.forEach((it, i) => {
+    const node = el.querySelector('#'+it.id);
+    if (!node) return;
+    const fill = node.querySelector('.fill');
+    const status = node.querySelector('.ex-status');
+    setTimeout(() => {
+      node.classList.remove('pending');
+      node.classList.add('running');
+      status.innerHTML = '<span class="spinner"></span> 执行中...';
+      fill.style.width = '60%';
+    }, 300 + i * 420);
+    setTimeout(() => {
+      node.classList.remove('running');
+      node.classList.add('done');
+      status.innerText = '✓ 完成';
+      fill.style.width = '100%';
+      const subtext = node.querySelector('.text-xs.text-muted');
+      if (subtext) subtext.innerText = it.label;
+      done++;
+      const head = el.querySelector('#execHead');
+      if (head) head.innerText = `Skill 执行中 · ${done}/3 完成`;
+      if (done === 3) {
+        setTimeout(() => renderResultCard(el), 400);
+        if (head) head.innerHTML = '<span class="chip chip-success">✓ 全部完成</span>';
+      }
+    }, 1400 + i * 500);
+  });
+}
+
+function renderResultCard(el) {
+  const area = el.querySelector('#resultArea');
+  if (!area) return;
+  area.innerHTML = `
+    <div class="result-card mt-3">
+      <div class="rc-head">
+        <div class="rc-icon">✓</div>
+        <div>
+          <div class="rc-title">任务执行完成 · 结果回流已同步</div>
+          <div class="text-xs text-muted mt-1">全程 32 秒 · 无需跨系统切换</div>
+        </div>
+      </div>
+      <div class="text-sm" style="line-height:1.7;">
+        <strong>执行摘要</strong>：12 个 SKU 建链 · 8 款主力挂价 ¥13.9 · 补货节奏调整生效 · 资源位已排期
+      </div>
+      <div class="result-metric-grid">
+        <div class="result-metric"><div class="lbl">预计出货</div><div class="val">48h</div></div>
+        <div class="result-metric"><div class="lbl">GMV 预期</div><div class="val">+5~8%</div></div>
+        <div class="result-metric"><div class="lbl">毛利率</div><div class="val">持平</div></div>
+      </div>
+      <div class="text-xs text-muted mt-3" style="padding-top:10px; border-top:1px dashed var(--line);">
+        <strong>下一步</strong>：章鱼将持续监控 48h 内出货与 GMV，偏离阈值自动发起跟进任务 · 结果已回传 Leader 目标指挥台
+      </div>
+    </div>
+  `;
+}
+
+/* ---- Act 4 Leader 看板 ---- */
+function sceneLeader_board() {
+  return leaderFrame(`
+    <div class="panel mb-3">
+      <div class="panel-header">
+        <div class="panel-title">🎯 Q2 生鲜 GMV 目标追踪</div>
+        <span class="chip chip-success">有新回流</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="goal-progress-card">
+          <div class="gp-head">
+            <div>
+              <div class="title">Q2 生鲜 GMV 目标达成</div>
+              <div class="target">目标 50.4 亿 · 基线 42 亿 · 策略 C</div>
+            </div>
+            <div class="target" id="timeStamp"><span class="chip chip-accent">刚刚回流</span></div>
+          </div>
+          <div class="gp-values">
+            <span class="current" id="currentGmv">42.0</span>
+            <span class="slash">/</span>
+            <span class="goal">50.4 亿</span>
+          </div>
+          <div class="gp-bar"><div class="fill" id="gpFill" style="width: 0%"></div></div>
+          <div class="flex mt-3 gap-3" style="font-size:12px;">
+            <div><span class="chip chip-muted">起点</span> 42.0 亿</div>
+            <div><span class="chip chip-accent">当前</span> <span id="currentGmvInline">42.0</span> 亿</div>
+            <div><span class="chip chip-outline">目标</span> 50.4 亿</div>
+            <div style="margin-left:auto"><strong style="color:var(--success)" id="trendMsg">正在计算...</strong></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📋 各小二执行回流</div>
+        <span class="text-xs text-muted">实时更新</span>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <div class="exec-log-item">
+          <div class="city">华东·李华</div>
+          <div class="action">✓ 牛奶品类补货扩容 + 挂价 ¥13.9 ×8 · 建链 12 SKU</div>
+          <div class="time">刚刚</div>
+        </div>
+        <div class="exec-log-item">
+          <div class="city">华东·王辉</div>
+          <div class="action">⏳ 烘焙品类扩容方案待确认（冲突裁决中）</div>
+          <div class="time">2 分钟前</div>
+        </div>
+        <div class="exec-log-item">
+          <div class="city">华北·陈磊</div>
+          <div class="action">✓ 肉禽品类 6 家新供应商签约完成</div>
+          <div class="time">5 分钟前</div>
+        </div>
+        <div class="exec-log-item">
+          <div class="city">华北·刘静</div>
+          <div class="action">⏳ 冻品补货方案章鱼评审中</div>
+          <div class="time">8 分钟前</div>
+        </div>
+        <div class="exec-log-item">
+          <div class="city">华南·周丹</div>
+          <div class="action">✓ 水果品类大促页已上线 · 预算锁定 ¥ 2200 万</div>
+          <div class="time">12 分钟前</div>
+        </div>
+      </div>
+    </div>
+  `, `
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">⭐ 你的视角：全程可追溯</div></div>
+      <div class="panel-body" style="font-size:12.5px; line-height:1.8;">
+        <div class="text-accent" style="font-weight:600;">从 gap 识别 · Leader 授权 → 首批执行完成</div>
+        <div class="mt-2" style="font-size:24px; font-weight:700; color: var(--navy);">3 分 12 秒</div>
+        <div class="text-muted mt-2">传统方式：此链路通常 2-3 天</div>
+      </div>
+    </div>
+
+    <div class="panel mt-3">
+      <div class="panel-header"><div class="panel-title">⚠️ 需你关注</div></div>
+      <div class="panel-body">
+        <div class="text-sm" style="line-height:1.7">
+          <div><span class="chip chip-warning">1</span> 华东·王辉的冲突升级给你裁决</div>
+          <div class="mt-2"><span class="chip chip-info">章鱼建议</span>接受商品专家方案</div>
+          <button class="btn btn-outline mt-3" style="width:100%">查看详情</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel mt-3">
+      <div class="panel-header"><div class="panel-title">📊 章鱼预测（更新）</div></div>
+      <div class="panel-body" style="font-size:12.5px; line-height:1.8;">
+        按当前执行节奏，Q2 末预计达成
+        <div style="font-size:22px; font-weight:700; color: var(--success); margin:6px 0;">50.8 亿（101%）</div>
+        <div class="text-muted">毛利率预期 14.9%（达成约束条件）</div>
+      </div>
+    </div>
+  `);
+}
+
+function animateBoardUpdate(el) {
+  const targetPct = 5;   // 第一批执行后拉动 +2.1 亿（42 → 44.1）
+  const fill = el.querySelector('#gpFill');
+  const current = el.querySelector('#currentGmv');
+  const currentInline = el.querySelector('#currentGmvInline');
+  const trend = el.querySelector('#trendMsg');
+  if (!fill) return;
+  // 进度条基线
+  const basePct = 42 / 50.4 * 100;
+  fill.style.width = basePct + '%';
+  setTimeout(() => {
+    fill.style.width = (basePct + targetPct) + '%';
+    let v = 42.0;
+    const target = 44.1;
+    const step = () => {
+      if (v < target) {
+        v += 0.07;
+        if (v > target) v = target;
+        current.innerText = v.toFixed(1);
+        currentInline.innerText = v.toFixed(1);
+        requestAnimationFrame(step);
+      } else {
+        current.classList.add('updating');
+        if (trend) trend.innerText = '↑ 本批执行拉动 +2.1 亿（+5%）';
+      }
+    };
+    step();
+  }, 800);
+}
+
+/* ==========================================================
+   Chatbot 互动演示 · Leader 端 / 小二端
+   用户在输入框键入指令 → 实时解析 → 动态注入到上下文
+   ========================================================== */
+
+/* ---- Leader 端：在看板下方突发下发指令 ---- */
+function sceneLeader_chatCommand() {
+  const centerHtml = `
+    <div class="panel mb-3" style="border: 1.5px solid rgba(240,78,35,0.28); background:#FFF8F6;">
+      <div class="panel-header" style="border-bottom-color:#FFE0D5;">
+        <div class="panel-title">🚨 突发场景 · 水产类目跌幅超预警</div>
+        <span class="chip chip-danger">URGENT</span>
+      </div>
+      <div class="panel-body" style="padding:12px 16px; font-size:13px; line-height:1.6;">
+        张总刚在 Q2 目标看板注意到：今日水产大盘 GMV 环比 <strong style="color:var(--danger);">−18%</strong>（昨仅 −6% · 超预警阈值 2.1×），上海/杭州/苏州 三仓库存周转异常。
+        不等策略推荐，不等专家集体讨论 —— 直接用<strong>自然语言</strong>下达突发命令。
+      </div>
+    </div>
+
+    <div class="panel" style="flex:1 1 auto; display:flex; flex-direction:column; min-height:460px;">
+      <div class="panel-header">
+        <div class="panel-title">💬 与章鱼对话 · 下发命令 → 实时拆解分发</div>
+        <span class="text-xs text-muted">chatbot 常驻 · 支持自然语言指令</span>
+      </div>
+      <div class="panel-body" style="flex:1; overflow:auto; padding:14px 16px; background:#FBFCFE;">
+        <div id="leaderChatThread" class="thread"></div>
+      </div>
+    </div>
+  `;
+  return leaderFrame(centerHtml);
+}
+
+function animateLeaderChatCommand(el) {
+  const ta = el.querySelector('.chat-bar textarea');
+  const thread = el.querySelector('#leaderChatThread');
+  if (!ta || !thread) return;
+
+  // pre-seed 系统 context
+  const ctx = document.createElement('div');
+  ctx.className = 'msg system';
+  ctx.innerHTML = `
+    <div class="msg-body" style="border-left:3px solid var(--info); background:#F2F7FE;">
+      <div class="msg-meta" style="background:#EAF1FB;">
+        <div class="agent-avatar sm" style="background:var(--info); color:#fff; font-size:12px;">ℹ️</div>
+        <span class="name">看板预警</span>
+        <span class="time">刚才</span>
+      </div>
+      <div class="msg-content" style="font-size:12.5px; color:var(--muted);">
+        检测到 <strong style="color:var(--danger);">水产</strong> 类目异常：GMV 当日 −18% · 活鲜占比骤降 · 上海/杭州/苏州仓周转恶化。
+      </div>
+    </div>
+  `;
+  thread.appendChild(ctx);
+
+  // 打字机：自动在输入框键入命令
+  const cmd = '水产本周立即冲 +30%，优先级 P0，今晚开始执行。不走策略选择，直接拆任务下发给华东。';
+  ta.value = '';
+  ta.focus();
+  let i = 0;
+  const typeNext = () => {
+    if (i <= cmd.length) {
+      ta.value = cmd.slice(0, i);
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(100, ta.scrollHeight) + 'px';
+      i++;
+      setTimeout(typeNext, 32);
+    } else {
+      setTimeout(simulateSend, 600);
+    }
+  };
+
+  const simulateSend = () => {
+    // 1) 用户消息气泡
+    const userMsg = document.createElement('div');
+    userMsg.className = 'msg';
+    userMsg.style.opacity = '0';
+    userMsg.innerHTML = `
+      <div class="msg-body" style="border-left:3px solid var(--accent); background:#FFF8F7;">
+        <div class="msg-meta" style="background:#FFEFEA;">
+          <div class="agent-avatar sm" style="background:var(--accent); color:#fff;">张</div>
+          <span class="name">张总</span>
+          <span class="chip chip-danger">🚨 突发指令</span>
+          <span class="time">刚刚</span>
+        </div>
+        <div class="msg-content" style="font-weight:500; color:var(--ink); font-size:13.5px;">
+          ${cmd}
+        </div>
+      </div>
+    `;
+    thread.appendChild(userMsg);
+    setTimeout(() => { userMsg.style.transition='opacity 0.35s'; userMsg.style.opacity='1'; }, 30);
+    ta.value = ''; ta.style.height = 'auto';
+
+    // 2) 章鱼思考中
+    setTimeout(() => {
+      const think = document.createElement('div');
+      think.className = 'msg octopus';
+      think.id = 'octoThinkLdr';
+      think.innerHTML = `
+        <div class="msg-body">
+          <div class="msg-meta">
+            <div class="agent-avatar octopus sm">🐙</div>
+            <span class="name">章鱼大脑</span>
+            <span class="chip chip-muted">理解中</span>
+          </div>
+          <div class="msg-content" style="display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px;">
+            <span class="spinner" style="color:var(--accent);"></span>
+            正在解析命令 · 识别业务对象 / 指标口径 / 影响面 / 优先级...
+          </div>
+        </div>
+      `;
+      thread.appendChild(think);
+      thread.scrollTop = thread.scrollHeight;
+    }, 700);
+
+    // 3) 解析结果卡
+    setTimeout(() => {
+      const t = document.getElementById('octoThinkLdr');
+      if (!t) return;
+      t.innerHTML = `
+        <div class="msg-body">
+          <div class="msg-meta">
+            <div class="agent-avatar octopus sm">🐙</div>
+            <span class="name">章鱼大脑</span>
+            <span class="chip chip-success">✓ 已理解</span>
+            <span class="time">0.8s</span>
+          </div>
+          <div class="msg-content">
+            <div style="font-weight:600; margin-bottom:10px; font-size:13.5px;">收到突发指令,已将您的原话转换为结构化任务：</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+              <div style="padding:10px 12px; background:var(--pale); border-radius:8px; border:1px solid var(--line);">
+                <div class="text-xs text-muted" style="letter-spacing:0.5px; text-transform:uppercase; font-weight:600; margin-bottom:4px;">业务对象</div>
+                <div style="font-weight:500; font-size:13px;">水产全品类<br><span class="text-xs text-muted">含活鲜 / 冷冻 / 深加工</span></div>
+              </div>
+              <div style="padding:10px 12px; background:var(--pale); border-radius:8px; border:1px solid var(--line);">
+                <div class="text-xs text-muted" style="letter-spacing:0.5px; text-transform:uppercase; font-weight:600; margin-bottom:4px;">目标口径</div>
+                <div style="font-weight:500; font-size:13px;">本周 GMV 环比 +30%<br><span class="text-xs text-muted">口径：全域 GMV · 不含退款</span></div>
+              </div>
+              <div style="padding:10px 12px; background:var(--pale); border-radius:8px; border:1px solid var(--line);">
+                <div class="text-xs text-muted" style="letter-spacing:0.5px; text-transform:uppercase; font-weight:600; margin-bottom:4px;">优先级 · 时点</div>
+                <div style="font-weight:500; font-size:13px; color:var(--danger);">P0 · 今晚 20:00 启动</div>
+              </div>
+              <div style="padding:10px 12px; background:var(--pale); border-radius:8px; border:1px solid var(--line);">
+                <div class="text-xs text-muted" style="letter-spacing:0.5px; text-transform:uppercase; font-weight:600; margin-bottom:4px;">影响范围</div>
+                <div style="font-weight:500; font-size:13px;">华东三仓 · 水产二级 6 条主链路</div>
+              </div>
+              <div style="padding:10px 12px; background:#FFF9F3; border-radius:8px; border:1px solid #FCE3C2; grid-column: span 2;">
+                <div class="text-xs text-muted" style="letter-spacing:0.5px; text-transform:uppercase; font-weight:600; margin-bottom:4px;">执行策略</div>
+                <div style="font-weight:500; font-size:13px;">✓ 跳过策略推荐环节（突发场景 · Leader 已明示直出）　·　✓ 高风险动作（调价 / 调补贴）仍走审批</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      thread.scrollTop = thread.scrollHeight;
+    }, 2000);
+
+    // 4) 任务拆解 + 分发
+    setTimeout(() => {
+      const dispatchMsg = document.createElement('div');
+      dispatchMsg.className = 'msg octopus';
+      dispatchMsg.innerHTML = `
+        <div class="msg-body">
+          <div class="msg-meta">
+            <div class="agent-avatar octopus sm">🐙</div>
+            <span class="name">章鱼大脑</span>
+            <span class="chip chip-accent">任务分发中</span>
+          </div>
+          <div class="msg-content">
+            <div class="text-xs text-muted mb-2" style="font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">已拆解为 4 个子任务,按业务对象路由到华东对应小二：</div>
+            <div id="leaderDispatchList" style="display:flex; flex-direction:column; gap:8px; margin-top:6px;"></div>
+          </div>
+        </div>
+      `;
+      thread.appendChild(dispatchMsg);
+      const list = el.querySelector('#leaderDispatchList');
+      const tasks = [
+        { t:'水产主力 SKU 一次性下调 6%,补贴资源 ¥48w', who:'华东价格 · 李华', p:'P0' },
+        { t:'活鲜 SKU 紧急扩容 15 个(重点冰鱼 / 海鲜活品)', who:'华东商品 · 陈磊', p:'P0' },
+        { t:'上海 / 杭州 / 苏州 三仓紧急补货 + 冷链协调', who:'华东供应链 · 王萌', p:'P0' },
+        { t:'首页水产专区资源位 + 会场全量渗透(今晚 20:00 上线)', who:'华东营销 · 徐莉', p:'P1' }
+      ];
+      tasks.forEach((tk, j) => {
+        setTimeout(() => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:grid; grid-template-columns: 1fr auto auto; gap:10px; align-items:center; padding:10px 12px; background:#FAFBFE; border:1px solid var(--line); border-radius:8px; opacity:0; transform:translateY(6px); transition: opacity 0.3s, transform 0.3s;';
+          row.innerHTML = `
+            <div style="min-width:0;">
+              <div style="font-size:13px; font-weight:500; line-height:1.5;">${tk.t}</div>
+              <div class="text-xs text-muted" style="margin-top:3px;">→ 分派给 ${tk.who}</div>
+            </div>
+            <span class="chip ${tk.p==='P0'?'chip-danger':'chip-muted'}">${tk.p}</span>
+            <span class="chip chip-success">✓ 已派发</span>
+          `;
+          list.appendChild(row);
+          requestAnimationFrame(() => { row.style.opacity='1'; row.style.transform='translateY(0)'; });
+          thread.scrollTop = thread.scrollHeight;
+        }, 380 + j*420);
+      });
+    }, 3300);
+
+    // 5) 章鱼收尾
+    setTimeout(() => {
+      const done = document.createElement('div');
+      done.className = 'msg octopus';
+      done.innerHTML = `
+        <div class="msg-body" style="border-left:3px solid var(--success); background:#F1FAF4;">
+          <div class="msg-meta" style="background:#E6F5EC;">
+            <div class="agent-avatar sm" style="background:var(--success); color:#fff;">✓</div>
+            <span class="name">章鱼大脑</span>
+            <span class="chip chip-success">全部派发完成 · 4.9s</span>
+            <span class="time">刚刚</span>
+          </div>
+          <div class="msg-content" style="font-size:13.5px; line-height:1.7;">
+            张总,水产加码 +30% 已拆解完毕 · 4 名华东小二已同时收到任务 · 执行进度会实时回流到您的<strong>Q2 目标看板</strong>。
+            <br><span class="text-muted" style="font-size:12.5px;">如需调整（改目标 / 换优先级 / 暂停某项），直接再说一句即可。</span>
+          </div>
+        </div>
+      `;
+      thread.appendChild(done);
+      thread.scrollTop = thread.scrollHeight;
+    }, 5400);
+  };
+
+  setTimeout(typeNext, 900);
+}
+
+/* ---- 小二端：在任务线程中用 chatbot 追问专家结论 ---- */
+function sceneXiaoer_chatAsk() {
+  const thread = `
+    <div class="msg octopus">
+      <div class="msg-body">
+        <div class="msg-meta">
+          <div class="agent-avatar octopus sm">🐙</div>
+          <span class="name">章鱼大脑</span>
+          <span class="time">刚刚</span>
+        </div>
+        <div class="msg-content" style="font-size:13.5px; line-height:1.7;">
+          4 位专家已返回建议 · 价格专家（¥12.9）与商品专家（¥13.9）结论存在冲突。小二可以直接用自然语言追问依据、调整策略，或让某位专家再跑一次。
+        </div>
+      </div>
+    </div>
+    <div id="xiaoerChatThread"></div>
+  `;
+  const right = `
+    <div class="text-xs text-muted mb-3">等待小二决策 · 尚未进入执行</div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">📦</div><div class="ex-name">补货 Skill</div><div class="ex-status">待命</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">🛒</div><div class="ex-name">建链 Skill</div><div class="ex-status">待命</div></div></div>
+    <div class="exec-item pending"><div class="ex-head"><div class="agent-avatar sm expert">💰</div><div class="ex-name">价格 Skill</div><div class="ex-status">待命 · 待小二追问</div></div></div>
+  `;
+  return taskFrame(thread, right);
+}
+
+function animateXiaoerChatAsk(el) {
+  const ta = el.querySelector('.chat-bar textarea');
+  const host = el.querySelector('#xiaoerChatThread');
+  const threadScroller = el.querySelector('#thread');
+  if (!ta || !host) return;
+
+  const question = '为什么价格专家推荐 ¥12.9、商品专家却要 ¥13.9？差这 1 块钱到底损毛利还是损 GMV？再顺便给我一份 TOP 3 SKU 的影响对比。';
+  ta.value = '';
+  ta.focus();
+  let i = 0;
+  const typeNext = () => {
+    if (i <= question.length) {
+      ta.value = question.slice(0, i);
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(100, ta.scrollHeight) + 'px';
+      i++;
+      setTimeout(typeNext, 26);
+    } else {
+      setTimeout(simulateSend, 550);
+    }
+  };
+
+  const simulateSend = () => {
+    // 1) 小二提问气泡
+    const userMsg = document.createElement('div');
+    userMsg.className = 'msg';
+    userMsg.style.opacity = '0';
+    userMsg.innerHTML = `
+      <div class="msg-body" style="border-left:3px solid var(--navy); background:#F5F7FB;">
+        <div class="msg-meta" style="background:#EAEFF8;">
+          <div class="agent-avatar sm" style="background:var(--navy); color:#fff;">李</div>
+          <span class="name">李华（华东生鲜小二）</span>
+          <span class="chip chip-muted">追问</span>
+          <span class="time">刚刚</span>
+        </div>
+        <div class="msg-content" style="font-size:13.5px; font-weight:500;">
+          ${question}
+        </div>
+      </div>
+    `;
+    host.appendChild(userMsg);
+    setTimeout(() => { userMsg.style.transition='opacity 0.35s'; userMsg.style.opacity='1'; }, 30);
+    ta.value = ''; ta.style.height = 'auto';
+    if (threadScroller) threadScroller.scrollTop = threadScroller.scrollHeight;
+
+    // 2) 章鱼思考
+    setTimeout(() => {
+      const think = document.createElement('div');
+      think.className = 'msg octopus';
+      think.id = 'octoThinkXe';
+      think.innerHTML = `
+        <div class="msg-body">
+          <div class="msg-meta">
+            <div class="agent-avatar octopus sm">🐙</div>
+            <span class="name">章鱼大脑</span>
+            <span class="chip chip-muted">召集专家中</span>
+          </div>
+          <div class="msg-content" style="display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px;">
+            <span class="spinner" style="color:var(--accent);"></span>
+            重新拉齐 💰 价格专家 + 🛒 商品专家 · 拉取 TOP 3 SKU 销量结构...
+          </div>
+        </div>
+      `;
+      host.appendChild(think);
+      if (threadScroller) threadScroller.scrollTop = threadScroller.scrollHeight;
+    }, 700);
+
+    // 3) 章鱼答复（解释冲突本质 + TOP3 SKU 对比表）
+    setTimeout(() => {
+      const t = document.getElementById('octoThinkXe');
+      if (!t) return;
+      t.innerHTML = `
+        <div class="msg-body">
+          <div class="msg-meta">
+            <div class="agent-avatar octopus sm">🐙</div>
+            <span class="name">章鱼大脑</span>
+            <span class="chip chip-success">✓ 已回复</span>
+            <span class="time">1.1s</span>
+          </div>
+          <div class="msg-content" style="font-size:13.5px; line-height:1.7;">
+            <div style="font-weight:600; margin-bottom:8px;">先讲核心差异,再给你 TOP 3 SKU 的数字：</div>
+            <div style="background:#FAFBFE; border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px;">
+              <div style="margin-bottom:6px;"><span class="chip" style="background:#FFE3DA; color:#B8401F;">💰 价格专家 · ¥12.9</span> <span style="color:var(--muted); font-size:12.5px;">目标：冲击 GMV · 对标竞对价带 ¥12-14 下沿 · 预估 GMV +10~12%</span></div>
+              <div style="margin-bottom:6px;"><span class="chip" style="background:#DDF3E4; color:#1D7B3E;">🛒 商品专家 · ¥13.9</span> <span style="color:var(--muted); font-size:12.5px;">目标：保毛利 · 新建链 SKU 需要 2pp 毛利安全垫 · 预估毛利 +0.8pp</span></div>
+              <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); font-size:12.5px;">
+                <strong>本质冲突：</strong> 这 ¥1 决定的是"新 SKU 首月靠量还是靠毛利度过爬坡"。按当前华东大盘 <strong style="color:var(--danger);">毛利优先级 > GMV</strong> 的运营方针,章鱼默认推荐 <strong>¥13.9</strong>,但最终由你决策。
+              </div>
+            </div>
+
+            <div style="font-weight:600; margin-bottom:6px;">TOP 3 SKU 影响对比：</div>
+            <div style="overflow:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+                <thead>
+                  <tr style="background:var(--pale); color:var(--muted); text-align:left;">
+                    <th style="padding:6px 10px; font-weight:600; border-bottom:1px solid var(--line);">SKU</th>
+                    <th style="padding:6px 10px; font-weight:600; border-bottom:1px solid var(--line);">¥12.9 方案</th>
+                    <th style="padding:6px 10px; font-weight:600; border-bottom:1px solid var(--line);">¥13.9 方案</th>
+                    <th style="padding:6px 10px; font-weight:600; border-bottom:1px solid var(--line);">差值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line);">蒙牛纯牛奶 250ml×24</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line);">GMV +¥42w / 毛利 14.8%</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line);">GMV +¥29w / 毛利 17.1%</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line); color:var(--muted);">量−13w / 利+2.3pp</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line);">伊利金典有机奶 250ml×12</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line);">GMV +¥38w / 毛利 15.6%</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line);">GMV +¥26w / 毛利 18.0%</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--line); color:var(--muted);">量−12w / 利+2.4pp</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 10px;">光明优倍 950ml×6</td>
+                    <td style="padding:8px 10px;">GMV +¥19w / 毛利 13.9%</td>
+                    <td style="padding:8px 10px;">GMV +¥13w / 毛利 16.2%</td>
+                    <td style="padding:8px 10px; color:var(--muted);">量−6w / 利+2.3pp</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="margin-top:10px; padding:10px 12px; background:var(--accent-soft); border-radius:8px; font-size:12.5px; color:var(--ink);">
+              <strong>我的建议：</strong> 若本周毛利已吃紧 → 选 ¥13.9；若要配大促冲量 → 选 ¥12.9 + 同步加补贴 ¥15w。你只要回一句"按 A 方案"或"改成 ¥13.5 再算一遍"我都能接住。
+            </div>
+          </div>
+        </div>
+      `;
+      if (threadScroller) threadScroller.scrollTop = threadScroller.scrollHeight;
+    }, 2300);
+
+    // 4) 提示 follow-up
+    setTimeout(() => {
+      const fu = document.createElement('div');
+      fu.className = 'msg system';
+      fu.style.opacity = '0';
+      fu.innerHTML = `
+        <div class="msg-body" style="border-left:3px solid var(--info); background:#F2F7FE;">
+          <div class="msg-meta" style="background:#EAF1FB;">
+            <div class="agent-avatar sm" style="background:var(--info); color:#fff;">ℹ️</div>
+            <span class="name">提示</span>
+          </div>
+          <div class="msg-content" style="font-size:12.5px; color:var(--muted);">
+            这条追问与答复会被写入任务上下文,后续冲突裁决会附带此记录,方便复盘追溯。下一步进入冲突显式裁决环节 →
+          </div>
+        </div>
+      `;
+      host.appendChild(fu);
+      setTimeout(() => { fu.style.transition='opacity 0.35s'; fu.style.opacity='1'; }, 30);
+      if (threadScroller) threadScroller.scrollTop = threadScroller.scrollHeight;
+    }, 4800);
+  };
+
+  setTimeout(typeNext, 800);
+}
+
+/* ---- Act 5 尾声 ---- */
+function sceneSummary() {
+  return `
+    <div class="summary-wrap">
+      <div class="summary-content">
+        <div class="summary-title">🎯 一次完整贯通的 Q 级目标</div>
+        <div class="summary-subtitle">从「平台识别 gap · Leader 授权策略」到「一线完成首批执行」，AI 把链路压缩到分钟级</div>
+
+        <div class="summary-big-stat">
+          <div class="lbl">全链路端到端用时（演示）</div>
+          <div class="val">3<span class="unit">分 12 秒</span></div>
+          <div class="text-xs" style="color:#CADCFC; margin-top:8px;">真实上线预期：小时级；传统模式：数天</div>
+        </div>
+
+        <div class="wow-stat">
+          <div class="wow-stat-item"><div class="v">1</div><div class="l">个统一平台入口（超喵）</div></div>
+          <div class="wow-stat-item"><div class="v">7±1</div><div class="l">个一级专家（可治理）</div></div>
+          <div class="wow-stat-item"><div class="v">7</div><div class="l">类 A2A 子协议</div></div>
+        </div>
+
+        <div class="summary-promise-grid">
+          <div class="summary-promise">
+            <div class="who">对 Leader</div>
+            <div class="what">Q 级目标可拆到城市、到品类、到具体动作；每一步可追溯、可复演、可干预。</div>
+          </div>
+          <div class="summary-promise">
+            <div class="who">对横向 PM</div>
+            <div class="what">按统一 A2A 协议接入，填写示范 + Checklist，不用等整套协议全建完。</div>
+          </div>
+          <div class="summary-promise">
+            <div class="who">对一线小二</div>
+            <div class="what">Day 1（T+3 月）三件套可用：专家直达 · 单域归因 · 高频动作自动化。</div>
+          </div>
+          <div class="summary-promise">
+            <div class="who">对平台团队</div>
+            <div class="what">章鱼能力 + A2A 协议明确 ownership 边界；范式可复用到商家端等场景。</div>
+          </div>
+        </div>
+
+        <div class="mt-4" style="text-align:center; margin-top: 24px;">
+          <button class="btn btn-primary" style="padding: 12px 32px; font-size:14px;" onclick="restart()">↻ 从头演示</button>
+          <span style="margin: 0 8px; color: var(--muted);">·</span>
+          <span class="text-sm text-muted">如需查看完整方案文档，请参考《猫超小二端「超喵」平台方案 v2.0》</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============ 启动 ============ */
+render();
+</script>
+</body>
+</html>
